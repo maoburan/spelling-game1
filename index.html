@@ -133,8 +133,18 @@
 
   <script src="js/words.js"></script>
   <script src="js/game.js"></script>
+  <script>
+    // 全局语音函数
+    window.speakText = function(text, lang) {
+      var tl = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
+      var encodedText = encodeURIComponent(text);
+      var audio = new Audio();
+      audio.src = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodedText + '&tl=' + tl + '&client=tw-ob';
+      audio.volume = 1;
+      audio.play();
+    };
+  </script>
 </body>
 </html>
-
 
 
