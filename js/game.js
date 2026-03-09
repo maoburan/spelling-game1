@@ -454,7 +454,10 @@ function playSuccessSound() {
 function speak(text, lang, rate, callback) {
   var tl = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
   var encodedText = encodeURIComponent(text);
-  var audio = new Audio();
+
+  // 创建 audio 元素
+  var audio = document.createElement('audio');
+  audio.crossOrigin = 'anonymous';
   audio.src = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodedText + '&tl=' + tl + '&client=tw-ob';
   audio.volume = 1;
 
@@ -464,11 +467,28 @@ function speak(text, lang, rate, callback) {
 
   audio.onerror = function(e) {
     console.log('TTS错误:', e);
+    // 如果失败，尝试用原生API
+    fallbackSpeak(text, lang);
   };
 
   audio.play().catch(function(e) {
     console.log('播放失败:', e);
+    fallbackSpeak(text, lang);
   });
+}
+
+// 备用语音方案
+function fallbackSpeak(text, lang) {
+  if (!window.speechSynthesis) return;
+
+  window.speechSynthesis.cancel();
+
+  var utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = lang || 'en-US';
+  utterance.rate = 0.8;
+  utterance.volume = 1;
+
+  window.speechSynthesis.speak(utterance);
 }
 
 // 播放字母发音 - 点击字母时调用
