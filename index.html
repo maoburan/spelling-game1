@@ -3,21 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>汪汪队英文拼写小能手</title>
+  <title>汪拼写小汪队英文能手</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- 测试按钮 -->
-  <button onclick="testSpeech()" style="position:fixed;top:10px;left:10px;z-index:9999;padding:10px;">测试语音</button>
-
   <!-- 背景图 -->
   <div class="game-background" id="gameBackground"></div>
+
+  <!-- 测试按钮 -->
+  <button onclick="testSpeech()" style="position:fixed;top:10px;left:10px;z-index:9999;padding:10px;">测试语音</button>
 
   <!-- 欢迎页面 -->
   <div class="screen screen-welcome" id="welcomeScreen">
     <div class="welcome-content">
       <h1 class="game-title">🐾 汪汪队英文拼写小能手</h1>
       <p class="game-subtitle">和汪汪队一起学英语吧！</p>
+
       <div class="level-selection">
         <h2>请选择难度</h2>
         <div class="level-cards">
@@ -56,20 +57,32 @@
         <span class="score-info">得分: <span id="currentScore">0</span></span>
       </div>
     </div>
+
     <div class="game-content">
+      <!-- 图片展示区 -->
       <div class="image-area">
         <div class="word-image-container" id="wordImageContainer">
           <span class="word-emoji" id="wordEmoji">🐱</span>
         </div>
         <div class="word-meaning" id="wordMeaning">猫</div>
       </div>
+
+      <!-- 填空槽位 -->
       <div class="slots-area">
-        <div class="letter-slots" id="letterSlots"></div>
+        <div class="letter-slots" id="letterSlots">
+          <!-- 动态生成 -->
+        </div>
       </div>
+
+      <!-- 字母选择区 -->
       <div class="letters-area">
         <p class="letters-hint">点击字母填入空格</p>
-        <div class="letter-buttons" id="letterButtons"></div>
+        <div class="letter-buttons" id="letterButtons">
+          <!-- 动态生成 -->
+        </div>
       </div>
+
+      <!-- 操作按钮 -->
       <div class="action-area">
         <button class="btn btn-hint" id="btnHint">💡 提示</button>
         <button class="btn btn-check" id="btnCheck">✓ 检查</button>
@@ -83,12 +96,17 @@
     <div class="modal-content">
       <div class="result-icon" id="resultIcon">🎉</div>
       <div class="result-title" id="resultTitle">太棒了！</div>
+
       <div class="result-word" id="resultWord">
         <span class="result-emoji">🐱</span>
         <span class="result-spelling">CAT</span>
         <span class="result-meaning">猫</span>
       </div>
-      <div class="result-sentences" id="resultSentences"></div>
+
+      <div class="result-sentences" id="resultSentences">
+        <!-- 动态生成 -->
+      </div>
+
       <div class="modal-actions">
         <button class="btn btn-next" id="btnNext">下一题 →</button>
       </div>
@@ -99,11 +117,16 @@
   <div class="screen screen-end hidden" id="endScreen">
     <div class="end-content">
       <h1 class="end-title">🎊 游戏结束！</h1>
+
       <div class="final-score">
         <span class="score-label">最终得分</span>
         <span class="score-value" id="finalScore">0</span>
       </div>
-      <div class="performance" id="performance"></div>
+
+      <div class="performance" id="performance">
+        <!-- 动态生成评价 -->
+      </div>
+
       <div class="end-actions">
         <button class="btn btn-restart" id="btnRestart">🔄 再玩一次</button>
         <button class="btn btn-home" id="btnHome">🏠 返回主页</button>
@@ -115,15 +138,27 @@
   <script src="js/game.js"></script>
   <script>
     function testSpeech() {
-      alert('测试');
       if (!window.speechSynthesis) {
-        alert('不支持语音');
+        console.log('不支持语音');
         return;
       }
+
+      window.speechSynthesis.cancel();
+
       var u = new SpeechSynthesisUtterance('hello');
       u.lang = 'en-US';
+      u.rate = 0.8;
+      u.volume = 1;
+
+      var voices = window.speechSynthesis.getVoices();
+      var enVoice = voices.find(function(v) { return v.lang.indexOf('en') > -1; });
+      if (enVoice) {
+        u.voice = enVoice;
+      }
+
       window.speechSynthesis.speak(u);
     }
   </script>
 </body>
 </html>
+
