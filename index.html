@@ -134,14 +134,25 @@
   <script src="js/words.js"></script>
   <script src="js/game.js"></script>
   <script>
-    // 全局语音函数
     window.speakText = function(text, lang) {
-      var tl = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
       var encodedText = encodeURIComponent(text);
-      var audio = new Audio();
-      audio.src = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodedText + '&tl=' + tl + '&client=tw-ob';
+      var tl = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
+      var url = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodedText + '&tl=' + tl + '&client=tw-ob';
+
+      var audio = new Audio(url);
       audio.volume = 1;
-      audio.play();
+
+      audio.addEventListener('canplaythrough', function() {
+        audio.play().catch(function(e) {
+          console.log('播放失败', e);
+        });
+      }, false);
+
+      audio.addEventListener('error', function(e) {
+        console.log('加载失败', e);
+      });
+
+      audio.load();
     };
   </script>
 </body>
