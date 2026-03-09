@@ -452,23 +452,17 @@ function playSuccessSound() {
 
 // 播放语音 - 使用外部TTS
 function speak(text, lang, rate, callback) {
-  if (!window.speechSynthesis) return;
+  var tl = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
+  var encodedText = encodeURIComponent(text);
 
-  try {
-    window.speechSynthesis.cancel();
+  // 使用 Google TTS
+  var audio = new Audio();
+  audio.src = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodedText + '&tl=' + tl + '&client=tw-ob';
+  audio.volume = 1;
+  audio.play();
 
-    var utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
-    utterance.rate = 0.8;
-    utterance.volume = 1;
-
-    if (callback) {
-      utterance.onend = callback;
-    }
-
-    window.speechSynthesis.speak(utterance);
-  } catch(e) {
-    console.log('语音错误:', e);
+  if (callback) {
+    setTimeout(callback, 1500);
   }
 }
 
@@ -527,5 +521,4 @@ function playEncouragement(correctCount) {
 
   speak(text, lang, 0.8);
 }
-
 
