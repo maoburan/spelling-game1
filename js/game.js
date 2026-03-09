@@ -470,6 +470,11 @@ function getFemaleVoice() {
   ) || voices.find(voice => voice.lang.includes('en-US')) || voices[0];
 }
 
+// 检测是否是安卓设备
+function isAndroid() {
+  return /Android/i.test(navigator.userAgent);
+}
+
 // 初始化语音（预加载声音）
 function initSpeech() {
   if ('speechSynthesis' in window) {
@@ -484,9 +489,10 @@ function initSpeech() {
       }, { once: true });
     }
 
-    // 测试播放一个静音来激活语音引擎（安卓需要）
-    const testUtterance = new SpeechSynthesisUtterance(' ');
+    // 测试播放一个音来激活语音引擎
+    const testUtterance = new SpeechSynthesisUtterance('a');
     testUtterance.volume = 0;
+    testUtterance.rate = 10;
     window.speechSynthesis.speak(testUtterance);
     window.speechSynthesis.cancel();
   }
@@ -502,34 +508,52 @@ function speakText(text, callback) {
   // 取消之前的语音
   window.speechSynthesis.cancel();
 
-  // 等待一下让语音引擎准备好
+  // 检测是否是安卓
+  const isAndroidDevice = isAndroid();
+
+  // 延迟播放，让语音引擎准备好
   setTimeout(() => {
-    // 每次都尝试获取最新的声音
-    let voices = window.speechSynthesis.getVoices();
-    let voice = null;
-
-    // 优先选择美式女声
-    if (voices.length > 0) {
-      voice = voices.find(v => v.lang.includes('en-US') && (v.name.includes('Female') || v.name.includes('Samantha'))) ||
-              voices.find(v => v.lang.includes('en-US')) ||
-              voices[0];
-    }
-
     const utterance = new SpeechSynthesisUtterance(text);
-    // 设置美式英语
-    utterance.lang = 'en-US';
-    utterance.rate = 0.6; // 语速适中
-    utterance.pitch = 1.0; // 正常音调
-    utterance.volume = 1.0; // 音量最大
 
-    // 使用找到的声音
-    if (voice) {
-      utterance.voice = voice;
+    // 根据设备类型设置不同的参数
+    if (isAndroidDevice) {
+      // 安卓设备使用更简单的设置
+      utterance.lang = 'en-US';
+      utterance.rate = 0.8;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+    } else {
+      // iOS/其他设备
+      utterance.lang = 'en-US';
+      utterance.rate = 0.6;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+
+      // 尝试获取更好的声音
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        const preferredVoice = voices.find(v =>
+          v.lang.includes('en-US') &&
+          (v.name.includes('Female') || v.name.includes('Samantha') || v.name.includes('Karen'))
+        ) || voices.find(v => v.lang.includes('en-US')) || voices[0];
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+        }
+      }
     }
 
     if (callback) {
       utterance.onend = callback;
     }
+
+    utterance.onerror = (e) => {
+      console.log('语音播放错误:', e.error);
+    };
+
+    // 播放
+    window.speechSynthesis.speak(utterance);
+  }, isAndroidDevice ? 200 : 100);
+}
 
     // 错误处理
     utterance.onerror = (e) => {
@@ -547,13 +571,16 @@ function speakLetter(letter) {
     // 先取消之前的语音
     window.speechSynthesis.cancel();
 
-    // 使用小写字母来避免"大写"前缀
-    const utterance = new SpeechSynthesisUtterance(letter.toLowerCase());
-    utterance.rate = 1.0;
-    utterance.volume = 1.0;
-    // 不设置 lang
+    // 延迟播放
+    setTimeout(() => {
+      // 使用小写字母来避免"大写"前缀
+      const utterance = new SpeechSynthesisUtterance(letter.toLowerCase());
+      utterance.lang = 'en-US';
+      utterance.rate = isAndroid() ? 1.2 : 1.0;
+      utterance.volume = 1.0;
 
-    window.speechSynthesis.speak(utterance);
+      window.speechSynthesis.speak(utterance);
+    }, 100);
   }
 }
 
