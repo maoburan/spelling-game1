@@ -516,3 +516,4 @@ function playEncouragement(correctCount) {
   speak(text, lang, 0.8);
 }
 
+
