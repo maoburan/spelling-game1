@@ -501,102 +501,51 @@ function initSpeech() {
   }
 }
 
-// 使用 Google TTS 音频播放（安卓备用方案）
-function playGoogleTTS(text, callback) {
-  // 使用 Google Translate TTS API
-  const encodedText = encodeURIComponent(text);
-  const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=en-US&client=tw-ob`;
-
-  const audio = new Audio(audioUrl);
-  audio.volume = 1.0;
-
-  audio.onended = () => {
-    if (callback) callback();
-  };
-
-  audio.onerror = (e) => {
-    console.log('Google TTS 播放失败:', e);
-    // 如果也失败，尝试原始 speechSynthesis
-    speakTextNative(text, callback);
-  };
-
-  audio.play().catch(e => {
-    console.log('音频播放失败:', e);
-    speakTextNative(text, callback);
-  });
-}
-
-// 原始 speechSynthesis 播放
-function speakTextNative(text, callback) {
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-US';
-  utterance.rate = 0.6;
-  utterance.pitch = 1.0;
-  utterance.volume = 1.0;
-
-  if (callback) {
-    utterance.onend = callback;
-  }
-
-  utterance.onerror = (e) => {
-    console.log('语音播放错误:', e.error);
-  };
-
-  window.speechSynthesis.speak(utterance);
-}
-
-// 使用 Web Speech API 播放美式女声
+// 使用 Web Speech API 播放语音
 function speakText(text, callback) {
-  // 检测是否是安卓
-  const isAndroidDevice = isAndroid();
-
-  // 先尝试用原生 speechSynthesis
+  // 先停止之前的语音
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
-
-    setTimeout(() => {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      utterance.rate = isAndroidDevice ? 0.8 : 0.6;
-      utterance.pitch = 1.0;
-      utterance.volume = 1.0;
-
-      // 尝试获取声音
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        const voice = voices.find(v => v.lang.includes('en-US')) || voices[0];
-        if (voice) utterance.voice = voice;
-      }
-
-      if (callback) {
-        utterance.onend = callback;
-      }
-
-      utterance.onerror = (e) => {
-        console.log('语音错误，尝试Google TTS:', e.error);
-        // 如果原生失败，尝试 Google TTS
-        playGoogleTTS(text, callback);
-      };
-
-      window.speechSynthesis.speak(utterance);
-    }, isAndroidDevice ? 300 : 100);
-  } else {
-    // 不支持 speechSynthesis，直接用 Google TTS
-    playGoogleTTS(text, callback);
   }
+
+  // 延迟播放，确保语音引擎准备好
+  setTimeout(() => {
+    if (!('speechSynthesis' in window)) {
+      console.log('浏览器不支持语音合成');
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.7;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    // 尝试获取英文声音
+    const voices = window.speechSynthesis.getVoices();
+    if (voices && voices.length > 0) {
+      const enVoice = voices.find(v => v.lang.includes('en-US'));
+      if (enVoice) {
+        utterance.voice = enVoice;
+      }
+    }
+
+    if (callback) {
+      utterance.onend = callback;
+    }
+
+    utterance.onerror = (e) => {
+      console.log('语音播放错误:', e.error);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }, 150);
 }
 
 // 播放字母发音 - 只播放字母本身，不添加"大写"前缀
 function speakLetter(letter) {
   const letterLower = letter.toLowerCase();
 
-  // 安卓用 Google TTS
-  if (isAndroid()) {
-    playGoogleTTS(letterLower);
-    return;
-  }
-
-  // iOS/其他用原生
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
 
@@ -605,13 +554,6 @@ function speakLetter(letter) {
       utterance.lang = 'en-US';
       utterance.rate = 1.0;
       utterance.volume = 1.0;
-
-      // 尝试获取声音
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        const voice = voices.find(v => v.lang.includes('en-US')) || voices[0];
-        if (voice) utterance.voice = voice;
-      }
 
       window.speechSynthesis.speak(utterance);
     }, 100);
@@ -677,3 +619,4 @@ function playEncouragement(correctCount) {
     window.speechSynthesis.speak(utterance);
   }
 }
+
