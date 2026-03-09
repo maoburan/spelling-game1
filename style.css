@@ -48,9 +48,9 @@ body {
   height: 100%;
   /* 三张图片等比划分并排显示 - 豆豆在中间 */
   background-image:
-    url('../莱德队长.jpeg'),
-    url('../豆豆背景.jpg'),
-    url('../汪汪队天天.jpg');
+    url('images/莱德队长.jpeg'),
+    url('images/豆豆背景.jpg'),
+    url('images/汪汪队天天.jpg');
   background-repeat: no-repeat;
   background-position: left center, center center, right center;
   background-size: calc(100% / 3) 100%;
