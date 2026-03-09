@@ -661,3 +661,167 @@ body {
     gap: 10px;
   }
 }
+
+/* ===== 横屏模式 ===== */
+@media (orientation: landscape) and (max-height: 500px) {
+  .game-title {
+    font-size: 1.4rem;
+    margin-bottom: 5px;
+  }
+
+  .game-subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+  }
+
+  .level-selection h2 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+  }
+
+  .level-cards {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .level-card {
+    padding: 10px 8px;
+  }
+
+  .level-icon {
+    font-size: 1.5rem;
+  }
+
+  .level-name {
+    font-size: 0.9rem;
+  }
+
+  .level-desc {
+    font-size: 0.7rem;
+  }
+
+  .game-content {
+    padding: 10px;
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .image-area {
+    flex: 0 0 120px;
+  }
+
+  .word-image-container {
+    width: 100px;
+    height: 100px;
+  }
+
+  .word-emoji {
+    font-size: 4rem;
+  }
+
+  .word-meaning {
+    font-size: 1rem;
+  }
+
+  .slots-area {
+    flex: 1;
+    min-width: auto;
+  }
+
+  .letter-slots {
+    gap: 5px;
+    justify-content: center;
+  }
+
+  .letter-slot {
+    width: 35px;
+    height: 45px;
+    font-size: 1.3rem;
+  }
+
+  .letters-area {
+    flex: 1;
+  }
+
+  .letter-buttons {
+    gap: 4px;
+  }
+
+  .letter-btn {
+    width: 32px;
+    height: 38px;
+    font-size: 1rem;
+  }
+
+  .action-area {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .btn {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+  }
+
+  .game-header {
+    padding: 8px 15px;
+  }
+}
+
+/* ===== 小屏幕手机 ===== */
+@media (max-width: 400px) {
+  .game-title {
+    font-size: 1.5rem;
+  }
+
+  .level-cards {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .level-card {
+    padding: 15px 10px;
+  }
+
+  .level-name {
+    font-size: 1rem;
+  }
+
+  .level-desc {
+    font-size: 0.75rem;
+  }
+
+  .word-image-container {
+    width: 120px;
+    height: 120px;
+  }
+
+  .word-emoji {
+    font-size: 4.5rem;
+  }
+
+  .letter-slot {
+    width: 38px;
+    height: 48px;
+    font-size: 1.4rem;
+  }
+
+  .letter-btn {
+    width: 36px;
+    height: 42px;
+    font-size: 1rem;
+  }
+
+  .letters-hint {
+    font-size: 0.9rem;
+  }
+}
+
+/* ===== 防止页面缩放和滚动 ===== */
+html {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
