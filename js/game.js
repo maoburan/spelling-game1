@@ -450,33 +450,25 @@ function playSuccessSound() {
 
 // ===== 语音播放函数 =====
 
-// 播放语音
+// 播放语音 - 使用外部TTS
 function speak(text, lang, rate, callback) {
-  if (!window.speechSynthesis) {
-    return;
-  }
+  var tl = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
+  var encodedText = encodeURIComponent(text);
+  var audio = new Audio();
+  audio.src = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodedText + '&tl=' + tl + '&client=tw-ob';
+  audio.volume = 1;
 
-  window.speechSynthesis.cancel();
+  audio.onended = function() {
+    if (callback) callback();
+  };
 
-  var utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
-  utterance.rate = rate || 0.8;
-  utterance.volume = 1;
+  audio.onerror = function(e) {
+    console.log('TTS错误:', e);
+  };
 
-  // 获取声音
-  var voices = window.speechSynthesis.getVoices();
-  var targetVoice = voices.find(function(v) {
-    return v.lang.indexOf(lang === 'zh-CN' ? 'zh' : 'en') > -1;
+  audio.play().catch(function(e) {
+    console.log('播放失败:', e);
   });
-  if (targetVoice) {
-    utterance.voice = targetVoice;
-  }
-
-  if (callback) {
-    utterance.onend = callback;
-  }
-
-  window.speechSynthesis.speak(utterance);
 }
 
 // 播放字母发音 - 点击字母时调用
