@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>汪拼写小汪队英文能手</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 背景图 -->
+  <div class="game-background" id="gameBackground"></div>
+
+  <!-- 欢迎页面 -->
+  <div class="screen screen-welcome" id="welcomeScreen">
+    <div class="welcome-content">
+      <h1 class="game-title">🐾 汪汪队英文拼写小能手</h1>
+      <p class="game-subtitle">和汪汪队一起学英语吧！</p>
+
+      <div class="level-selection">
+        <h2>请选择难度</h2>
+        <div class="level-cards">
+          <div class="level-card" data-level="1">
+            <span class="level-icon">🌟</span>
+            <span class="level-name">入门</span>
+            <span class="level-desc">3个字母</span>
+          </div>
+          <div class="level-card" data-level="2">
+            <span class="level-icon">🧒</span>
+            <span class="level-name">幼儿园</span>
+            <span class="level-desc">4-5个字母</span>
+          </div>
+          <div class="level-card" data-level="3">
+            <span class="level-icon">🏫</span>
+            <span class="level-name">小学</span>
+            <span class="level-desc">5-7个字母</span>
+          </div>
+          <div class="level-card" data-level="4">
+            <span class="level-icon">📚</span>
+            <span class="level-name">中学</span>
+            <span class="level-desc">7-9个字母</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 游戏页面 -->
+  <div class="screen screen-game hidden" id="gameScreen">
+    <div class="game-header">
+      <button class="btn-back" id="btnBack">← 退出</button>
+      <div class="game-info">
+        <span class="level-badge" id="levelBadge">入门</span>
+        <span class="progress-info">第 <span id="currentQuestion">1</span> / <span id="totalQuestions">10</span> 题</span>
+        <span class="score-info">得分: <span id="currentScore">0</span></span>
+      </div>
+    </div>
+
+    <div class="game-content">
+      <!-- 图片展示区 -->
+      <div class="image-area">
+        <div class="word-image-container" id="wordImageContainer">
+          <span class="word-emoji" id="wordEmoji">🐱</span>
+        </div>
+        <div class="word-meaning" id="wordMeaning">猫</div>
+      </div>
+
+      <!-- 填空槽位 -->
+      <div class="slots-area">
+        <div class="letter-slots" id="letterSlots">
+          <!-- 动态生成 -->
+        </div>
+      </div>
+
+      <!-- 字母选择区 -->
+      <div class="letters-area">
+        <p class="letters-hint">点击字母填入空格</p>
+        <div class="letter-buttons" id="letterButtons">
+          <!-- 动态生成 -->
+        </div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="action-area">
+        <button class="btn btn-hint" id="btnHint">💡 提示</button>
+        <button class="btn btn-check" id="btnCheck">✓ 检查</button>
+        <button class="btn btn-clear" id="btnClear">✕ 清除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 结果弹窗 -->
+  <div class="modal-overlay hidden" id="resultModal">
+    <div class="modal-content">
+      <div class="result-icon" id="resultIcon">🎉</div>
+      <div class="result-title" id="resultTitle">太棒了！</div>
+
+      <div class="result-word" id="resultWord">
+        <span class="result-emoji">🐱</span>
+        <span class="result-spelling">CAT</span>
+        <span class="result-meaning">猫</span>
+      </div>
+
+      <div class="result-sentences" id="resultSentences">
+        <!-- 动态生成 -->
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-next" id="btnNext">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 结束页面 -->
+  <div class="screen screen-end hidden" id="endScreen">
+    <div class="end-content">
+      <h1 class="end-title">🎊 游戏结束！</h1>
+
+      <div class="final-score">
+        <span class="score-label">最终得分</span>
+        <span class="score-value" id="finalScore">0</span>
+      </div>
+
+      <div class="performance" id="performance">
+        <!-- 动态生成评价 -->
+      </div>
+
+      <div class="end-actions">
+        <button class="btn btn-restart" id="btnRestart">🔄 再玩一次</button>
+        <button class="btn btn-home" id="btnHome">🏠 返回主页</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="words.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

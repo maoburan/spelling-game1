@@ -1,0 +1,588 @@
+// ===== 游戏核心逻辑 =====
+
+// 游戏状态
+const gameState = {
+  currentLevel: 1,
+  currentQuestion: 1,
+  totalQuestions: 100,
+  currentScore: 0,
+  currentWord: null,
+  userAnswer: [],
+  letterOptions: [],
+  availableLetters: [],
+  questionQueue: [],
+  lastAnswerCorrect: null // 记录上一题是否正确
+};
+
+// DOM 元素
+const elements = {
+  welcomeScreen: document.getElementById('welcomeScreen'),
+  gameScreen: document.getElementById('gameScreen'),
+  endScreen: document.getElementById('endScreen'),
+  gameBackground: document.getElementById('gameBackground'),
+  levelBadge: document.getElementById('levelBadge'),
+  currentQuestion: document.getElementById('currentQuestion'),
+  totalQuestions: document.getElementById('totalQuestions'),
+  currentScore: document.getElementById('currentScore'),
+  wordEmoji: document.getElementById('wordEmoji'),
+  wordMeaning: document.getElementById('wordMeaning'),
+  letterSlots: document.getElementById('letterSlots'),
+  letterButtons: document.getElementById('letterButtons'),
+  resultModal: document.getElementById('resultModal'),
+  resultIcon: document.getElementById('resultIcon'),
+  resultTitle: document.getElementById('resultTitle'),
+  resultWord: document.getElementById('resultWord'),
+  resultSentences: document.getElementById('resultSentences'),
+  finalScore: document.getElementById('finalScore'),
+  performance: document.getElementById('performance')
+};
+
+// 初始化游戏
+function initGame() {
+  // 初始化语音
+  initSpeech();
+
+  // 绑定难度选择按钮
+  document.querySelectorAll('.level-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const level = parseInt(card.dataset.level);
+      startGame(level);
+    });
+  });
+
+  // 绑定操作按钮
+  document.getElementById('btnBack').addEventListener('click', showWelcomeScreen);
+  document.getElementById('btnHint').addEventListener('click', showHint);
+  document.getElementById('btnCheck').addEventListener('click', checkAnswer);
+  document.getElementById('btnClear').addEventListener('click', clearAnswer);
+  document.getElementById('btnNext').addEventListener('click', nextQuestion);
+  document.getElementById('btnRestart').addEventListener('click', restartGame);
+  document.getElementById('btnHome').addEventListener('click', showWelcomeScreen);
+}
+
+// 开始游戏
+function startGame(level) {
+  gameState.currentLevel = level;
+  gameState.currentQuestion = 1;
+  gameState.currentScore = 0;
+
+  // 准备100题：每题都随机抽取，确保完全随机
+  const levelWords = wordsData[level];
+  const questionQueue = [];
+
+  for (let i = 0; i < gameState.totalQuestions; i++) {
+    // 每次都从词库中随机选择一个单词
+    const randomIndex = Math.floor(Math.random() * levelWords.length);
+    questionQueue.push(levelWords[randomIndex]);
+  }
+
+  gameState.questionQueue = questionQueue;
+
+  // 更新UI
+  elements.levelBadge.textContent = levelInfo[level].name;
+  elements.totalQuestions.textContent = gameState.totalQuestions;
+  elements.currentScore.textContent = '0';
+
+  // 切换页面
+  elements.welcomeScreen.classList.add('hidden');
+  elements.endScreen.classList.add('hidden');
+  elements.gameScreen.classList.remove('hidden');
+
+  // 加载第一题
+  loadQuestion();
+}
+
+// 加载题目
+function loadQuestion() {
+  if (gameState.currentQuestion > gameState.totalQuestions) {
+    endGame();
+    return;
+  }
+
+  gameState.currentWord = gameState.questionQueue[gameState.currentQuestion - 1];
+  gameState.userAnswer = new Array(gameState.currentWord.word.length).fill(null);
+  gameState.availableLetters = generateLetterOptions(gameState.currentWord.word);
+
+  // 对于幼儿园、小学、中学（等级2、3、4），预先填入2个正确字母
+  if (gameState.currentLevel >= 2) {
+    const word = gameState.currentWord.word;
+    const wordLength = word.length;
+
+    // 生成2个不同的随机位置
+    const positions = [];
+    while (positions.length < 2) {
+      const pos = Math.floor(Math.random() * wordLength);
+      if (!positions.includes(pos)) {
+        positions.push(pos);
+      }
+    }
+
+    // 在这些位置填入正确字母
+    positions.forEach(pos => {
+      gameState.userAnswer[pos] = word[pos];
+    });
+  }
+
+  // 更新UI
+  elements.currentQuestion.textContent = gameState.currentQuestion;
+  elements.wordEmoji.textContent = gameState.currentWord.emoji;
+  elements.wordMeaning.textContent = gameState.currentWord.meaning;
+
+  // 渲染填空槽和字母按钮
+  renderLetterSlots();
+  renderLetterButtons();
+}
+
+// 生成字母选项（正确答案 + 干扰字母）
+function generateLetterOptions(correctWord) {
+  const correctLetters = correctWord.split('');
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+  // 计算需要添加的干扰字母数量（正确字母数 + 2）
+  const totalOptions = correctWord.length + 2;
+
+  // 获取不重复的干扰字母
+  const availableDistractors = shuffleArray(
+    alphabet.split('').filter(letter => !correctLetters.includes(letter))
+  ).slice(0, totalOptions - correctWord.length);
+
+  // 合并并打乱
+  return shuffleArray([...correctLetters, ...availableDistractors]);
+}
+
+// 渲染填空槽
+function renderLetterSlots() {
+  elements.letterSlots.innerHTML = '';
+
+  gameState.userAnswer.forEach((letter, index) => {
+    const slot = document.createElement('div');
+    slot.className = `letter-slot ${letter ? 'filled' : ''}`;
+    slot.textContent = letter || '?';
+    slot.dataset.index = index;
+
+    // 点击槽位可以移除字母
+    slot.addEventListener('click', () => {
+      if (gameState.userAnswer[index]) {
+        removeLetterFromSlot(index);
+      }
+    });
+
+    elements.letterSlots.appendChild(slot);
+  });
+}
+
+// 渲染字母按钮
+function renderLetterButtons() {
+  elements.letterButtons.innerHTML = '';
+
+  gameState.availableLetters.forEach((letter, index) => {
+    const btn = document.createElement('button');
+    btn.className = 'letter-btn';
+    btn.textContent = letter;
+    btn.dataset.letter = letter;
+
+    btn.addEventListener('click', () => {
+      addLetterToSlot(letter);
+    });
+
+    elements.letterButtons.appendChild(btn);
+  });
+}
+
+// 添加字母到第一个空槽位
+function addLetterToSlot(letter) {
+  const firstEmptyIndex = gameState.userAnswer.findIndex(l => l === null);
+
+  if (firstEmptyIndex !== -1) {
+    gameState.userAnswer[firstEmptyIndex] = letter;
+    renderLetterSlots();
+    // 播放字母发音
+    speakLetter(letter);
+  }
+}
+
+// 从槽位移除字母
+function removeLetterFromSlot(index) {
+  gameState.userAnswer[index] = null;
+  renderLetterSlots();
+}
+
+// 清除答案
+function clearAnswer() {
+  gameState.userAnswer = new Array(gameState.currentWord.word.length).fill(null);
+  gameState.availableLetters = generateLetterOptions(gameState.currentWord.word);
+  renderLetterSlots();
+  renderLetterButtons();
+}
+
+// 显示提示
+function showHint() {
+  // 找到第一个空位
+  const firstEmptyIndex = gameState.userAnswer.findIndex(l => l === null);
+
+  if (firstEmptyIndex !== -1) {
+    // 显示正确答案
+    const correctLetter = gameState.currentWord.word[firstEmptyIndex];
+    gameState.userAnswer[firstEmptyIndex] = correctLetter;
+
+    // 扣分（提示扣1分）
+    gameState.currentScore = Math.max(0, gameState.currentScore - 1);
+    elements.currentScore.textContent = gameState.currentScore;
+
+    renderLetterSlots();
+  }
+}
+
+// 检查答案
+function checkAnswer() {
+  const userAnswerStr = gameState.userAnswer.join('');
+
+  if (userAnswerStr.length !== gameState.currentWord.word.length) {
+    alert('请填写完整的单词！');
+    return;
+  }
+
+  const isCorrect = userAnswerStr === gameState.currentWord.word;
+
+  if (isCorrect) {
+    gameState.currentScore += 10;
+    elements.currentScore.textContent = gameState.currentScore;
+
+    // 检查是否达到100分，如果是则播放鼓励语音
+    if (gameState.currentScore % 100 === 0) {
+      setTimeout(() => {
+        playEncouragement(gameState.currentScore);
+      }, 3000); // 等待例句读完后再播放
+    }
+
+    showResult(true);
+  } else {
+    showResult(false);
+  }
+}
+
+// 显示结果
+function showResult(isCorrect) {
+  const word = gameState.currentWord;
+  // 记录当前答案是否正确
+  gameState.lastAnswerCorrect = isCorrect;
+
+  if (isCorrect) {
+    elements.resultIcon.textContent = '🎉';
+    elements.resultTitle.textContent = '太棒了！';
+    elements.resultTitle.style.color = '#2ECC71';
+
+    // 播放成功音效
+    playSuccessSound();
+
+    // 用温柔女声读2遍单词
+    speakWord(word.word, 2);
+
+    // 读2遍例句（每句读1遍）
+    setTimeout(() => {
+      speakSentence(word.sentences[0].english, () => {
+        // 第一句读完后再读第二句
+        setTimeout(() => {
+          speakSentence(word.sentences[1].english);
+        }, 800);
+      });
+    }, 1500);
+
+    // 显示单词
+    elements.resultWord.innerHTML = `
+      <span class="result-emoji">${word.emoji}</span>
+      <span class="result-spelling">${word.word}</span>
+      <span class="result-meaning">${word.meaning}</span>
+    `;
+
+    // 显示例句
+    elements.resultSentences.innerHTML = word.sentences.map(s => `
+      <div class="sentence-item">
+        <div class="sentence-english">${s.english}</div>
+        <div class="sentence-chinese">${s.chinese}</div>
+      </div>
+    `).join('');
+
+    // 正确时显示"下一题"按钮
+    const nextBtn = document.getElementById('btnNext');
+    nextBtn.textContent = '下一题 →';
+    nextBtn.disabled = false;
+    nextBtn.style.opacity = '1';
+
+  } else {
+    elements.resultIcon.textContent = '😅';
+    elements.resultTitle.textContent = '再试一次！';
+    elements.resultTitle.style.color = '#E74C3C';
+
+    // 显示单词
+    elements.resultWord.innerHTML = `
+      <span class="result-emoji">${word.emoji}</span>
+      <span class="result-spelling">${'?'.repeat(word.word.length)}</span>
+      <span class="result-meaning">${word.meaning}</span>
+    `;
+
+    // 错误时不显示例句
+    elements.resultSentences.innerHTML = '<div class="sentence-item"><div class="sentence-english">请重新拼写这个单词</div><div class="sentence-chinese">拼写正确后才能继续</div></div>';
+
+    // 错误时显示"重新拼写"按钮
+    const nextBtn = document.getElementById('btnNext');
+    nextBtn.textContent = '重新拼写 ↺';
+    nextBtn.disabled = false;
+    nextBtn.style.opacity = '1';
+  }
+
+  elements.resultModal.classList.remove('hidden');
+}
+
+// 下一题
+function nextQuestion() {
+  // 检查上一题是否正确
+  if (gameState.lastAnswerCorrect === false) {
+    // 如果上一题错误，关闭弹窗并清除答案，让用户重新拼写
+    elements.resultModal.classList.add('hidden');
+    clearAnswer();
+    gameState.lastAnswerCorrect = null;
+  } else {
+    // 如果上一题正确，进入下一题
+    elements.resultModal.classList.add('hidden');
+    gameState.currentQuestion++;
+    gameState.lastAnswerCorrect = null;
+    loadQuestion();
+  }
+}
+
+// 结束游戏
+function endGame() {
+  elements.finalScore.textContent = gameState.currentScore;
+
+  // 根据得分显示评价
+  const maxScore = gameState.totalQuestions * 10;
+  const percentage = gameState.currentScore / maxScore;
+
+  let performanceText = '';
+  if (percentage === 1) {
+    performanceText = '🏆 太厉害了！你是拼写小天才！';
+  } else if (percentage >= 0.8) {
+    performanceText = '⭐ 表现得非常棒！继续加油！';
+  } else if (percentage >= 0.6) {
+    performanceText = '💪 做得不错！再练习一下会更好！';
+  } else if (percentage >= 0.4) {
+    performanceText = '📚 继续努力，你一定可以的！';
+  } else {
+    performanceText = '💕 不要灰心，多练习就会进步！';
+  }
+
+  elements.performance.textContent = performanceText;
+
+  elements.gameScreen.classList.add('hidden');
+  elements.endScreen.classList.remove('hidden');
+}
+
+// 重新开始
+function restartGame() {
+  startGame(gameState.currentLevel);
+}
+
+// 显示欢迎页面
+function showWelcomeScreen() {
+  elements.gameScreen.classList.add('hidden');
+  elements.endScreen.classList.add('hidden');
+  elements.resultModal.classList.add('hidden');
+  elements.welcomeScreen.classList.remove('hidden');
+}
+
+// 数组打乱函数
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', initGame);
+
+// ===== 音效播放函数 =====
+function playSuccessSound() {
+  // 使用 Web Audio API 播放成功音效
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    // 播放一个欢快的上升音调
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    // 设置音调 - 上升的音符
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+    oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+    oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+
+    // 设置音量
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.4);
+
+    // 添加第二个音符 - 延长的欢快音符
+    setTimeout(() => {
+      const osc2 = audioContext.createOscillator();
+      const gain2 = audioContext.createGain();
+      osc2.connect(gain2);
+      gain2.connect(audioContext.destination);
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(1046.5, audioContext.currentTime); // C6
+      gain2.gain.setValueAtTime(0.25, audioContext.currentTime);
+      gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      osc2.start(audioContext.currentTime);
+      osc2.stop(audioContext.currentTime + 0.5);
+    }, 150);
+  } catch (e) {
+    console.log('音效播放失败:', e);
+  }
+}
+
+// ===== 语音播放函数 =====
+
+// 获取可用的美式女声
+function getFemaleVoice() {
+  if (!('speechSynthesis' in window)) {
+    return null;
+  }
+
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length === 0) {
+    return null;
+  }
+
+  // 优先选择美式女声
+  return voices.find(voice =>
+    voice.lang.includes('en-US') &&
+    (voice.name.includes('Female') || voice.name.includes('Samantha') || voice.name.includes('Karen'))
+  ) || voices.find(voice => voice.lang.includes('en-US')) || voices[0];
+}
+
+// 初始化语音（预加载声音）
+function initSpeech() {
+  if ('speechSynthesis' in window) {
+    // 预先获取语音列表
+    window.speechSynthesis.getVoices();
+
+    // 设置事件监听
+    window.speechSynthesis.onvoiceschanged = () => {
+      console.log('语音已加载');
+    };
+  }
+}
+
+// 使用 Web Speech API 播放美式女声
+function speakText(text, callback) {
+  if (!('speechSynthesis' in window)) {
+    console.log('浏览器不支持语音合成');
+    return;
+  }
+
+  // 每次都尝试获取最新的声音
+  const voice = getFemaleVoice();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  // 设置温柔美式女声
+  utterance.lang = 'en-US';
+  utterance.rate = 0.4; // 语速放慢到0.5倍
+  utterance.pitch = 1.2; // 音调柔和
+  utterance.volume = 1.0; // 音量最大
+
+  // 使用找到的声音
+  if (voice) {
+    utterance.voice = voice;
+    console.log('使用声音:', voice.name);
+  }
+
+  if (callback) {
+    utterance.onend = callback;
+  }
+
+  // 解决 iOS Safari 问题
+  utterance.onerror = (e) => {
+    console.log('语音播放错误:', e);
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+// 播放字母发音 - 只播放字母本身，不添加"大写"前缀
+function speakLetter(letter) {
+  if ('speechSynthesis' in window) {
+    // 先取消之前的语音
+    window.speechSynthesis.cancel();
+
+    // 使用小写字母来避免"大写"前缀
+    const utterance = new SpeechSynthesisUtterance(letter.toLowerCase());
+    utterance.rate = 1.0;
+    utterance.volume = 1.0;
+    // 不设置 lang
+
+    window.speechSynthesis.speak(utterance);
+  }
+}
+
+// 播放单词发音（可重复）
+function speakWord(word, times, callback) {
+  let count = 0;
+
+  function speak() {
+    if (count < times) {
+      // 添加句号让浏览器把单词当作句子来读，而不是字母
+      const wordWithPunctuation = word + '.';
+      speakText(wordWithPunctuation, () => {
+        count++;
+        if (count < times) {
+          setTimeout(speak, 800); // 每次间隔800ms
+        } else if (callback) {
+          callback();
+        }
+      });
+    }
+  }
+
+  speak();
+}
+
+// 播放句子
+function speakSentence(sentence, callback) {
+  speakText(sentence, callback);
+}
+
+// 播放鼓励语音
+function playEncouragement(score) {
+  const encouragements = [
+    { text: "Great job! Keep going!", lang: "en-US" },
+    { text: "Excellent work! You're doing amazing!", lang: "en-US" },
+    { text: "Wonderful! Keep up the good work!", lang: "en-US" },
+    { text: "太棒了！继续加油！", lang: "zh-CN" },
+    { text: "非常好！你真厉害！", lang: "zh-CN" },
+    { text: "继续努力！你能行的！", lang: "zh-CN" }
+  ];
+
+  // 随机选择一句鼓励语
+  const randomIndex = Math.floor(Math.random() * encouragements.length);
+  const encouragement = encouragements[randomIndex];
+
+  // 停止之前的语音
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(encouragement.text);
+    utterance.lang = encouragement.lang;
+    utterance.rate = 0.8;
+    utterance.volume = 1.0;
+
+    window.speechSynthesis.speak(utterance);
+  }
+}
