@@ -450,17 +450,11 @@ function playSuccessSound() {
 
 // ===== 语音播放函数 =====
 
-// 播放语音 - 使用外部TTS
+// 播放语音
 function speak(text, lang, rate, callback) {
-  var tl = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
-  var encodedText = encodeURIComponent(text);
-
-  // 使用 Google TTS
-  var audio = new Audio();
-  audio.src = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodedText + '&tl=' + tl + '&client=tw-ob';
-  audio.volume = 1;
-  audio.play();
-
+  if (window.speakText) {
+    window.speakText(text, lang);
+  }
   if (callback) {
     setTimeout(callback, 1500);
   }
