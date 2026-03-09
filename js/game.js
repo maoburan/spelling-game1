@@ -450,33 +450,56 @@ function playSuccessSound() {
 
 // ===== 语音播放函数 =====
 
-// 使用免费TTS API播放语音
-function playTTS(text, lang, callback) {
-  var audio = new Audio();
-  var encodedText = encodeURIComponent(text);
-  var tl = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
+// 预加载语音
+var voiceReady = false;
+var availableVoices = [];
 
-  // 使用 Google Translate TTS
-  audio.src = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodedText + '&tl=' + tl + '&client=tw-ob';
-  audio.volume = 1;
-
-  audio.onended = function() {
-    if (callback) callback();
-  };
-
-  audio.onerror = function() {
-    console.log('TTS播放失败');
-  };
-
-  audio.play().catch(function(e) {
-    console.log('播放错误:', e);
-  });
+function loadVoices() {
+  if (window.speechSynthesis) {
+    availableVoices = window.speechSynthesis.getVoices();
+    if (availableVoices.length > 0) {
+      voiceReady = true;
+    }
+  }
 }
 
-// 播放语音
+// 页面加载时预加载
+loadVoices();
+if (window.speechSynthesis && window.speechSynthesis.onvoiceschanged) {
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+// 播放语音 - 使用原生API
 function speak(text, lang, rate, callback) {
-  // 使用TTS API
-  playTTS(text, lang, callback);
+  if (!window.speechSynthesis) {
+    alert('您的浏览器不支持语音合成');
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+
+  setTimeout(function() {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
+    utterance.rate = rate || 0.8;
+    utterance.volume = 1;
+
+    // 尝试获取英文女声
+    if (availableVoices.length > 0) {
+      var enVoice = availableVoices.find(function(v) {
+        return v.lang.indexOf('en') > -1;
+      });
+      if (enVoice) {
+        utterance.voice = enVoice;
+      }
+    }
+
+    if (callback) {
+      utterance.onend = callback;
+    }
+
+    window.speechSynthesis.speak(utterance);
+  }, 100);
 }
 
 // 播放字母发音 - 点击字母时调用
@@ -534,4 +557,5 @@ function playEncouragement(correctCount) {
 
   speak(text, lang, 0.8);
 }
+
 
