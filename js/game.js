@@ -498,86 +498,117 @@ function initSpeech() {
   }
 }
 
-// 使用 Web Speech API 播放美式女声
-function speakText(text, callback) {
-  if (!('speechSynthesis' in window)) {
-    console.log('浏览器不支持语音合成');
-    return;
+// 使用 Google TTS 音频播放（安卓备用方案）
+function playGoogleTTS(text, callback) {
+  // 使用 Google Translate TTS API
+  const encodedText = encodeURIComponent(text);
+  const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=en-US&client=tw-ob`;
+
+  const audio = new Audio(audioUrl);
+  audio.volume = 1.0;
+
+  audio.onended = () => {
+    if (callback) callback();
+  };
+
+  audio.onerror = (e) => {
+    console.log('Google TTS 播放失败:', e);
+    // 如果也失败，尝试原始 speechSynthesis
+    speakTextNative(text, callback);
+  };
+
+  audio.play().catch(e => {
+    console.log('音频播放失败:', e);
+    speakTextNative(text, callback);
+  });
+}
+
+// 原始 speechSynthesis 播放
+function speakTextNative(text, callback) {
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'en-US';
+  utterance.rate = 0.6;
+  utterance.pitch = 1.0;
+  utterance.volume = 1.0;
+
+  if (callback) {
+    utterance.onend = callback;
   }
 
-  // 取消之前的语音
-  window.speechSynthesis.cancel();
+  utterance.onerror = (e) => {
+    console.log('语音播放错误:', e.error);
+  };
 
+  window.speechSynthesis.speak(utterance);
+}
+
+// 使用 Web Speech API 播放美式女声
+function speakText(text, callback) {
   // 检测是否是安卓
   const isAndroidDevice = isAndroid();
 
-  // 延迟播放，让语音引擎准备好
-  setTimeout(() => {
-    const utterance = new SpeechSynthesisUtterance(text);
+  // 先尝试用原生 speechSynthesis
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
 
-    // 根据设备类型设置不同的参数
-    if (isAndroidDevice) {
-      // 安卓设备使用更简单的设置
+    setTimeout(() => {
+      const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-US';
-      utterance.rate = 0.8;
-      utterance.pitch = 1.0;
-      utterance.volume = 1.0;
-    } else {
-      // iOS/其他设备
-      utterance.lang = 'en-US';
-      utterance.rate = 0.6;
+      utterance.rate = isAndroidDevice ? 0.8 : 0.6;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
 
-      // 尝试获取更好的声音
+      // 尝试获取声音
       const voices = window.speechSynthesis.getVoices();
       if (voices.length > 0) {
-        const preferredVoice = voices.find(v =>
-          v.lang.includes('en-US') &&
-          (v.name.includes('Female') || v.name.includes('Samantha') || v.name.includes('Karen'))
-        ) || voices.find(v => v.lang.includes('en-US')) || voices[0];
-        if (preferredVoice) {
-          utterance.voice = preferredVoice;
-        }
+        const voice = voices.find(v => v.lang.includes('en-US')) || voices[0];
+        if (voice) utterance.voice = voice;
       }
-    }
 
-    if (callback) {
-      utterance.onend = callback;
-    }
+      if (callback) {
+        utterance.onend = callback;
+      }
 
-    utterance.onerror = (e) => {
-      console.log('语音播放错误:', e.error);
-    };
+      utterance.onerror = (e) => {
+        console.log('语音错误，尝试Google TTS:', e.error);
+        // 如果原生失败，尝试 Google TTS
+        playGoogleTTS(text, callback);
+      };
 
-    // 播放
-    window.speechSynthesis.speak(utterance);
-  }, isAndroidDevice ? 200 : 100);
-}
-
-    // 错误处理
-    utterance.onerror = (e) => {
-      console.log('语音播放错误:', e.error);
-    };
-
-    // 播放
-    window.speechSynthesis.speak(utterance);
-  }, 100);
+      window.speechSynthesis.speak(utterance);
+    }, isAndroidDevice ? 300 : 100);
+  } else {
+    // 不支持 speechSynthesis，直接用 Google TTS
+    playGoogleTTS(text, callback);
+  }
 }
 
 // 播放字母发音 - 只播放字母本身，不添加"大写"前缀
 function speakLetter(letter) {
+  const letterLower = letter.toLowerCase();
+
+  // 安卓用 Google TTS
+  if (isAndroid()) {
+    playGoogleTTS(letterLower);
+    return;
+  }
+
+  // iOS/其他用原生
   if ('speechSynthesis' in window) {
-    // 先取消之前的语音
     window.speechSynthesis.cancel();
 
-    // 延迟播放
     setTimeout(() => {
-      // 使用小写字母来避免"大写"前缀
-      const utterance = new SpeechSynthesisUtterance(letter.toLowerCase());
+      const utterance = new SpeechSynthesisUtterance(letterLower);
       utterance.lang = 'en-US';
-      utterance.rate = isAndroid() ? 1.2 : 1.0;
+      utterance.rate = 1.0;
       utterance.volume = 1.0;
+
+      // 尝试获取声音
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        const voice = voices.find(v => v.lang.includes('en-US')) || voices[0];
+        if (voice) utterance.voice = voice;
+      }
 
       window.speechSynthesis.speak(utterance);
     }, 100);
