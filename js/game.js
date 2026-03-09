@@ -450,70 +450,38 @@ function playSuccessSound() {
 
 // ===== 语音播放函数 =====
 
-// 获取可用的美式女声
-function getFemaleVoice() {
-  if (!('speechSynthesis' in window)) {
-    return null;
-  }
-
-  const voices = window.speechSynthesis.getVoices();
-  if (voices.length === 0) {
-    return null;
-  }
-
-  // 优先选择美式女声
-  return voices.find(voice =>
-    voice.lang.includes('en-US') &&
-    (voice.name.includes('Female') || voice.name.includes('Samantha') || voice.name.includes('Karen'))
-  ) || voices.find(voice => voice.lang.includes('en-US')) || voices[0];
-}
-
-// 使用 Web Speech API 播放语音
+// 播放语音 - 最简单版本
 function speakText(text, callback) {
-  if (!('speechSynthesis' in window)) {
-    console.log('浏览器不支持语音合成');
+  if (!window.speechSynthesis) {
     return;
   }
-
-  // 停止之前的语音
   window.speechSynthesis.cancel();
 
-  // 等待一小段时间后播放
-  setTimeout(function() {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = 0.8;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
+  var utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'en-US';
+  utterance.rate = 0.9;
+  utterance.volume = 1;
 
-    if (callback) {
-      utterance.onend = callback;
-    }
+  if (callback) {
+    utterance.onend = callback;
+  }
 
-    utterance.onerror = function(e) {
-      console.log('语音播放错误:', e.error);
-    };
-
-    window.speechSynthesis.speak(utterance);
-  }, 100);
+  window.speechSynthesis.speak(utterance);
 }
 
-// 播放字母发音 - 只播放字母本身，不添加"大写"前缀
+// 播放字母发音
 function speakLetter(letter) {
-  const letterLower = letter.toLowerCase();
-
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-
-    setTimeout(() => {
-      const utterance = new SpeechSynthesisUtterance(letterLower);
-      utterance.lang = 'en-US';
-      utterance.rate = 1.0;
-      utterance.volume = 1.0;
-
-      window.speechSynthesis.speak(utterance);
-    }, 100);
+  if (!window.speechSynthesis) {
+    return;
   }
+  window.speechSynthesis.cancel();
+
+  var utterance = new SpeechSynthesisUtterance(letter.toLowerCase());
+  utterance.lang = 'en-US';
+  utterance.rate = 1;
+  utterance.volume = 1;
+
+  window.speechSynthesis.speak(utterance);
 }
 
 // 播放单词发音（可重复）
@@ -545,34 +513,32 @@ function speakSentence(sentence, callback) {
 
 // 播放鼓励语音 - 汪汪队主题
 function playEncouragement(correctCount) {
-  // 汪汪队主题鼓励语
-  const encouragements = [
-    { text: "Great job! You're a super star! Like Chase would say, let's go!", lang: "en-US" },
-    { text: "Amazing! You're as brave as Marshall! The team is proud of you!", lang: "en-US" },
-    { text: "Excellent work! You're as clever as Rocky! Green means go!", lang: "en-US" },
-    { text: "Wonderful! You're as fast as Rubble! Let's keep rolling!", lang: "en-US" },
-    { text: "Fantastic! You're as helpful as Zuma! Water you waiting for!", lang: "en-US" },
-    { text: "Super! Just like Skye's the youngest pilot, you're doing great!", lang: "en-US" },
-    { text: "太棒了！你和汪汪队一样厉害！", lang: "zh-CN" },
-    { text: "非常好！莱德队长会为你骄傲的！", lang: "zh-CN" },
-    { text: "你真的很棒！阿奇会说：任务完成！", lang: "zh-CN" },
-    { text: "继续加油！豆豆会给你点赞！", lang: "zh-CN" }
+  var encouragements = [
+    "Great job! You're a super star!",
+    "Amazing! You're as brave as Marshall!",
+    "Excellent work! You're as clever as Rocky!",
+    "Wonderful! You're as fast as Rubble!",
+    "Fantastic! You're as helpful as Zuma!",
+    "Super! Just like Skye, you're doing great!",
+    "太棒了！你和汪汪队一样厉害！",
+    "非常好！莱德队长会为你骄傲的！",
+    "你真的很棒！阿奇会说：任务完成！",
+    "继续加油！豆豆会给你点赞！"
   ];
 
-  // 随机选择一句鼓励语
-  const randomIndex = Math.floor(Math.random() * encouragements.length);
-  const encouragement = encouragements[randomIndex];
+  var randomIndex = Math.floor(Math.random() * encouragements.length);
+  var text = encouragements[randomIndex];
 
-  // 停止之前的语音
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(encouragement.text);
-    utterance.lang = encouragement.lang;
-    utterance.rate = 0.7;
-    utterance.volume = 1.0;
-
-    window.speechSynthesis.speak(utterance);
+  if (!window.speechSynthesis) {
+    return;
   }
+  window.speechSynthesis.cancel();
+
+  var utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = text.indexOf('!') > -1 && /[a-zA-Z]/.test(text) ? 'en-US' : 'zh-CN';
+  utterance.rate = 0.8;
+  utterance.volume = 1;
+
+  window.speechSynthesis.speak(utterance);
 }
 
