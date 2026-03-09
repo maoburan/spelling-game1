@@ -45,6 +45,8 @@ function initGame() {
   // 绑定难度选择按钮
   document.querySelectorAll('.level-card').forEach(card => {
     card.addEventListener('click', () => {
+      // 初始化语音（必须在用户交互后调用，iOS需要）
+      initSpeech();
       const level = parseInt(card.dataset.level);
       startGame(level);
     });
@@ -472,12 +474,18 @@ function getFemaleVoice() {
 function initSpeech() {
   if ('speechSynthesis' in window) {
     // 预先获取语音列表
-    window.speechSynthesis.getVoices();
+    let voices = window.speechSynthesis.getVoices();
 
-    // 设置事件监听
-    window.speechSynthesis.onvoiceschanged = () => {
-      console.log('语音已加载');
-    };
+    // 如果声音未加载，等待加载
+    if (voices.length === 0) {
+      window.speechSynthesis.addEventListener('voiceschanged', function() {
+        voices = window.speechSynthesis.getVoices();
+        console.log('语音已加载:', voices.length);
+      }, { once: true });
+    }
+
+    // 确保在iOS上可以播放
+    window.speechSynthesis.pending = false;
   }
 }
 
@@ -488,20 +496,30 @@ function speakText(text, callback) {
     return;
   }
 
+  // 取消之前的语音
+  window.speechSynthesis.cancel();
+
   // 每次都尝试获取最新的声音
-  const voice = getFemaleVoice();
+  let voice = getFemaleVoice();
+
+  // 如果没有找到合适的声音，尝试重新获取（异步）
+  if (!voice) {
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      voice = voices.find(v => v.lang.includes('en-US')) || voices[0];
+    }
+  }
 
   const utterance = new SpeechSynthesisUtterance(text);
   // 设置温柔美式女声
   utterance.lang = 'en-US';
-  utterance.rate = 0.4; // 语速放慢到0.5倍
-  utterance.pitch = 1.2; // 音调柔和
+  utterance.rate = 0.5; // 语速放慢
+  utterance.pitch = 1.1; // 音调柔和
   utterance.volume = 1.0; // 音量最大
 
   // 使用找到的声音
   if (voice) {
     utterance.voice = voice;
-    console.log('使用声音:', voice.name);
   }
 
   if (callback) {
@@ -513,6 +531,7 @@ function speakText(text, callback) {
     console.log('语音播放错误:', e);
   };
 
+  // 立即播放（iOS需要在用户交互后立即调用）
   window.speechSynthesis.speak(utterance);
 }
 
