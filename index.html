@@ -10,9 +10,6 @@
   <!-- 背景图 -->
   <div class="game-background" id="gameBackground"></div>
 
-  <!-- 测试按钮 -->
-  <button onclick="testSpeech()" style="position:fixed;top:10px;left:10px;z-index:9999;padding:10px;">测试语音</button>
-
   <!-- 欢迎页面 -->
   <div class="screen screen-welcome" id="welcomeScreen">
     <div class="welcome-content">
@@ -136,29 +133,7 @@
 
   <script src="js/words.js"></script>
   <script src="js/game.js"></script>
-  <script>
-    function testSpeech() {
-      if (!window.speechSynthesis) {
-        console.log('不支持语音');
-        return;
-      }
-
-      window.speechSynthesis.cancel();
-
-      var u = new SpeechSynthesisUtterance('hello');
-      u.lang = 'en-US';
-      u.rate = 0.8;
-      u.volume = 1;
-
-      var voices = window.speechSynthesis.getVoices();
-      var enVoice = voices.find(function(v) { return v.lang.indexOf('en') > -1; });
-      if (enVoice) {
-        u.voice = enVoice;
-      }
-
-      window.speechSynthesis.speak(u);
-    }
-  </script>
 </body>
 </html>
+
 
