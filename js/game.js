@@ -40,14 +40,9 @@ const elements = {
 
 // 初始化游戏
 function initGame() {
-  // 初始化语音
-  initSpeech();
-
   // 绑定难度选择按钮
   document.querySelectorAll('.level-card').forEach(card => {
     card.addEventListener('click', () => {
-      // 初始化语音（必须在用户交互后调用，iOS需要）
-      initSpeech();
       const level = parseInt(card.dataset.level);
       startGame(level);
     });
@@ -473,73 +468,34 @@ function getFemaleVoice() {
   ) || voices.find(voice => voice.lang.includes('en-US')) || voices[0];
 }
 
-// 检测是否是安卓设备
-function isAndroid() {
-  return /Android/i.test(navigator.userAgent);
-}
-
-// 初始化语音（预加载声音）
-function initSpeech() {
-  if ('speechSynthesis' in window) {
-    // 预先获取语音列表
-    let voices = window.speechSynthesis.getVoices();
-
-    // 如果声音未加载，等待加载
-    if (voices.length === 0) {
-      window.speechSynthesis.addEventListener('voiceschanged', function() {
-        voices = window.speechSynthesis.getVoices();
-        console.log('语音已加载:', voices.length);
-      }, { once: true });
-    }
-
-    // 测试播放一个音来激活语音引擎
-    const testUtterance = new SpeechSynthesisUtterance('a');
-    testUtterance.volume = 0;
-    testUtterance.rate = 10;
-    window.speechSynthesis.speak(testUtterance);
-    window.speechSynthesis.cancel();
-  }
-}
-
 // 使用 Web Speech API 播放语音
 function speakText(text, callback) {
-  // 先停止之前的语音
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
+  if (!('speechSynthesis' in window)) {
+    console.log('浏览器不支持语音合成');
+    return;
   }
 
-  // 延迟播放，确保语音引擎准备好
-  setTimeout(() => {
-    if (!('speechSynthesis' in window)) {
-      console.log('浏览器不支持语音合成');
-      return;
-    }
+  // 停止之前的语音
+  window.speechSynthesis.cancel();
 
+  // 等待一小段时间后播放
+  setTimeout(function() {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
-    utterance.rate = 0.7;
+    utterance.rate = 0.8;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
-
-    // 尝试获取英文声音
-    const voices = window.speechSynthesis.getVoices();
-    if (voices && voices.length > 0) {
-      const enVoice = voices.find(v => v.lang.includes('en-US'));
-      if (enVoice) {
-        utterance.voice = enVoice;
-      }
-    }
 
     if (callback) {
       utterance.onend = callback;
     }
 
-    utterance.onerror = (e) => {
+    utterance.onerror = function(e) {
       console.log('语音播放错误:', e.error);
     };
 
     window.speechSynthesis.speak(utterance);
-  }, 150);
+  }, 100);
 }
 
 // 播放字母发音 - 只播放字母本身，不添加"大写"前缀
