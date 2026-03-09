@@ -1,14 +1,3 @@
-// 测试语音函数
-function testSpeech() {
-  alert('测试开始');
-  if (!window.speechSynthesis) {
-    alert('浏览器不支持语音');
-    return;
-  }
-  var utterance = new SpeechSynthesisUtterance('Hello');
-  utterance.lang = 'en-US';
-  window.speechSynthesis.speak(utterance);
-}
 // ===== 游戏核心逻辑 =====
 
 // 游戏状态
@@ -51,7 +40,6 @@ const elements = {
 
 // 初始化游戏
 function initGame() {
-  alert('游戏已初始化');
   // 绑定难度选择按钮
   document.querySelectorAll('.level-card').forEach(card => {
     card.addEventListener('click', () => {
@@ -516,7 +504,6 @@ function speak(text, lang, rate, callback) {
 
 // 播放字母发音 - 点击字母时调用
 function speakLetter(letter) {
-  alert('播放字母: ' + letter);
   speak(letter.toLowerCase(), 'en-US', 1.0);
 }
 
@@ -570,3 +557,4 @@ function playEncouragement(correctCount) {
 
   speak(text, lang, 0.8);
 }
+
