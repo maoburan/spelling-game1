@@ -484,8 +484,11 @@ function initSpeech() {
       }, { once: true });
     }
 
-    // 确保在iOS上可以播放
-    window.speechSynthesis.pending = false;
+    // 测试播放一个静音来激活语音引擎（安卓需要）
+    const testUtterance = new SpeechSynthesisUtterance(' ');
+    testUtterance.volume = 0;
+    window.speechSynthesis.speak(testUtterance);
+    window.speechSynthesis.cancel();
   }
 }
 
@@ -499,40 +502,43 @@ function speakText(text, callback) {
   // 取消之前的语音
   window.speechSynthesis.cancel();
 
-  // 每次都尝试获取最新的声音
-  let voice = getFemaleVoice();
+  // 等待一下让语音引擎准备好
+  setTimeout(() => {
+    // 每次都尝试获取最新的声音
+    let voices = window.speechSynthesis.getVoices();
+    let voice = null;
 
-  // 如果没有找到合适的声音，尝试重新获取（异步）
-  if (!voice) {
-    const voices = window.speechSynthesis.getVoices();
+    // 优先选择美式女声
     if (voices.length > 0) {
-      voice = voices.find(v => v.lang.includes('en-US')) || voices[0];
+      voice = voices.find(v => v.lang.includes('en-US') && (v.name.includes('Female') || v.name.includes('Samantha'))) ||
+              voices.find(v => v.lang.includes('en-US')) ||
+              voices[0];
     }
-  }
 
-  const utterance = new SpeechSynthesisUtterance(text);
-  // 设置温柔美式女声
-  utterance.lang = 'en-US';
-  utterance.rate = 0.5; // 语速放慢
-  utterance.pitch = 1.1; // 音调柔和
-  utterance.volume = 1.0; // 音量最大
+    const utterance = new SpeechSynthesisUtterance(text);
+    // 设置美式英语
+    utterance.lang = 'en-US';
+    utterance.rate = 0.6; // 语速适中
+    utterance.pitch = 1.0; // 正常音调
+    utterance.volume = 1.0; // 音量最大
 
-  // 使用找到的声音
-  if (voice) {
-    utterance.voice = voice;
-  }
+    // 使用找到的声音
+    if (voice) {
+      utterance.voice = voice;
+    }
 
-  if (callback) {
-    utterance.onend = callback;
-  }
+    if (callback) {
+      utterance.onend = callback;
+    }
 
-  // 解决 iOS Safari 问题
-  utterance.onerror = (e) => {
-    console.log('语音播放错误:', e);
-  };
+    // 错误处理
+    utterance.onerror = (e) => {
+      console.log('语音播放错误:', e.error);
+    };
 
-  // 立即播放（iOS需要在用户交互后立即调用）
-  window.speechSynthesis.speak(utterance);
+    // 播放
+    window.speechSynthesis.speak(utterance);
+  }, 100);
 }
 
 // 播放字母发音 - 只播放字母本身，不添加"大写"前缀
