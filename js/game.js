@@ -1,3 +1,14 @@
+// 测试语音函数
+function testSpeech() {
+  alert('测试开始');
+  if (!window.speechSynthesis) {
+    alert('浏览器不支持语音');
+    return;
+  }
+  var utterance = new SpeechSynthesisUtterance('Hello');
+  utterance.lang = 'en-US';
+  window.speechSynthesis.speak(utterance);
+}
 // ===== 游戏核心逻辑 =====
 
 // 游戏状态
