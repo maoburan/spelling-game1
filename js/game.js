@@ -452,43 +452,50 @@ function playSuccessSound() {
 
 // 播放语音 - 使用外部TTS
 function speak(text, lang, rate, callback) {
+  // 尝试用原生语音API（这个在某些浏览器可能不行）
+  if (tryNativeSpeak(text, lang)) {
+    if (callback) callback();
+    return;
+  }
+
+  // 使用TTS服务
   var tl = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
   var encodedText = encodeURIComponent(text);
 
-  // 创建 audio 元素
-  var audio = document.createElement('audio');
-  audio.crossOrigin = 'anonymous';
-  audio.src = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodedText + '&tl=' + tl + '&client=tw-ob';
+  var audio = new Audio();
+  audio.src = 'https://sslconverter.org/sound?text=' + encodedText + '&lang=' + (lang === 'zh-CN' ? 'zh' : 'en') + '&speed=slow';
   audio.volume = 1;
 
   audio.onended = function() {
     if (callback) callback();
   };
 
-  audio.onerror = function(e) {
-    console.log('TTS错误:', e);
-    // 如果失败，尝试用原生API
-    fallbackSpeak(text, lang);
+  audio.onerror = function() {
+    console.log('TTS失败');
   };
 
   audio.play().catch(function(e) {
-    console.log('播放失败:', e);
-    fallbackSpeak(text, lang);
+    console.log('播放错误:', e);
   });
 }
 
-// 备用语音方案
-function fallbackSpeak(text, lang) {
-  if (!window.speechSynthesis) return;
+// 尝试原生语音
+function tryNativeSpeak(text, lang) {
+  if (!window.speechSynthesis) return false;
 
-  window.speechSynthesis.cancel();
+  try {
+    window.speechSynthesis.cancel();
 
-  var utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = lang || 'en-US';
-  utterance.rate = 0.8;
-  utterance.volume = 1;
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
+    utterance.rate = 0.8;
+    utterance.volume = 1;
 
-  window.speechSynthesis.speak(utterance);
+    window.speechSynthesis.speak(utterance);
+    return true;
+  } catch(e) {
+    return false;
+  }
 }
 
 // 播放字母发音 - 点击字母时调用
