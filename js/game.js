@@ -504,6 +504,7 @@ function speak(text, lang, rate, callback) {
 
 // 播放字母发音 - 点击字母时调用
 function speakLetter(letter) {
+  alert('播放字母: ' + letter);
   speak(letter.toLowerCase(), 'en-US', 1.0);
 }
 
