@@ -40,9 +40,6 @@ const elements = {
 
 // 初始化游戏
 function initGame() {
-  // 初始化语音
-  initSpeech();
-
   // 绑定难度选择按钮
   document.querySelectorAll('.level-card').forEach(card => {
     card.addEventListener('click', () => {
@@ -453,89 +450,33 @@ function playSuccessSound() {
 
 // ===== 语音播放函数 =====
 
-// 语音缓存
-var speechVoices = [];
-var speechReady = false;
+// 使用免费TTS API播放语音
+function playTTS(text, lang, callback) {
+  var audio = new Audio();
+  var encodedText = encodeURIComponent(text);
+  var tl = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
 
-// 初始化语音
-function initSpeech() {
-  if (!window.speechSynthesis) {
-    return;
-  }
+  // 使用 Google Translate TTS
+  audio.src = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodedText + '&tl=' + tl + '&client=tw-ob';
+  audio.volume = 1;
 
-  // 获取可用声音
-  function loadVoices() {
-    speechVoices = window.speechSynthesis.getVoices();
-    if (speechVoices.length > 0) {
-      speechReady = true;
-    }
-  }
+  audio.onended = function() {
+    if (callback) callback();
+  };
 
-  loadVoices();
+  audio.onerror = function() {
+    console.log('TTS播放失败');
+  };
 
-  // Chrome 需要监听这个事件
-  if (window.speechSynthesis.onvoiceschanged !== undefined) {
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-  }
+  audio.play().catch(function(e) {
+    console.log('播放错误:', e);
+  });
 }
 
-// 获取英文女声
-function getEnglishFemaleVoice() {
-  if (speechVoices.length === 0) {
-    speechVoices = window.speechSynthesis.getVoices();
-  }
-
-  // 找英文女声
-  for (var i = 0; i < speechVoices.length; i++) {
-    var voice = speechVoices[i];
-    if (voice.lang.indexOf('en') !== -1 &&
-        (voice.name.indexOf('Female') !== -1 ||
-         voice.name.indexOf('Samantha') !== -1 ||
-         voice.name.indexOf('Karen') !== -1 ||
-         voice.name.indexOf('Victoria') !== -1 ||
-         voice.name.indexOf('Allison') !== -1)) {
-      return voice;
-    }
-  }
-
-  // 找英文声音
-  for (var i = 0; i < speechVoices.length; i++) {
-    if (speechVoices[i].lang.indexOf('en') !== -1) {
-      return speechVoices[i];
-    }
-  }
-
-  return null;
-}
-
-// 播放语音 - 核心函数
+// 播放语音
 function speak(text, lang, rate, callback) {
-  if (!window.speechSynthesis) {
-    return;
-  }
-
-  // 先停止之前的语音
-  window.speechSynthesis.cancel();
-
-  setTimeout(function() {
-    var utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang || 'en-US';
-    utterance.rate = rate || 0.8;
-    utterance.volume = 1.0;
-
-    // 设置声音
-    var voice = getEnglishFemaleVoice();
-    if (voice) {
-      utterance.voice = voice;
-    }
-
-    if (callback) {
-      utterance.onend = callback;
-    }
-
-    // 播放
-    window.speechSynthesis.speak(utterance);
-  }, 50);
+  // 使用TTS API
+  playTTS(text, lang, callback);
 }
 
 // 播放字母发音 - 点击字母时调用
