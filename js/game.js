@@ -450,56 +450,33 @@ function playSuccessSound() {
 
 // ===== 语音播放函数 =====
 
-// 预加载语音
-var voiceReady = false;
-var availableVoices = [];
-
-function loadVoices() {
-  if (window.speechSynthesis) {
-    availableVoices = window.speechSynthesis.getVoices();
-    if (availableVoices.length > 0) {
-      voiceReady = true;
-    }
-  }
-}
-
-// 页面加载时预加载
-loadVoices();
-if (window.speechSynthesis && window.speechSynthesis.onvoiceschanged) {
-  window.speechSynthesis.onvoiceschanged = loadVoices;
-}
-
-// 播放语音 - 使用原生API
+// 播放语音
 function speak(text, lang, rate, callback) {
   if (!window.speechSynthesis) {
-    alert('您的浏览器不支持语音合成');
     return;
   }
 
   window.speechSynthesis.cancel();
 
-  setTimeout(function() {
-    var utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
-    utterance.rate = rate || 0.8;
-    utterance.volume = 1;
+  var utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
+  utterance.rate = rate || 0.8;
+  utterance.volume = 1;
 
-    // 尝试获取英文女声
-    if (availableVoices.length > 0) {
-      var enVoice = availableVoices.find(function(v) {
-        return v.lang.indexOf('en') > -1;
-      });
-      if (enVoice) {
-        utterance.voice = enVoice;
-      }
-    }
+  // 获取声音
+  var voices = window.speechSynthesis.getVoices();
+  var targetVoice = voices.find(function(v) {
+    return v.lang.indexOf(lang === 'zh-CN' ? 'zh' : 'en') > -1;
+  });
+  if (targetVoice) {
+    utterance.voice = targetVoice;
+  }
 
-    if (callback) {
-      utterance.onend = callback;
-    }
+  if (callback) {
+    utterance.onend = callback;
+  }
 
-    window.speechSynthesis.speak(utterance);
-  }, 100);
+  window.speechSynthesis.speak(utterance);
 }
 
 // 播放字母发音 - 点击字母时调用
@@ -557,4 +534,5 @@ function playEncouragement(correctCount) {
 
   speak(text, lang, 0.8);
 }
+
 
