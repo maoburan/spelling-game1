@@ -452,36 +452,7 @@ function playSuccessSound() {
 
 // 播放语音 - 使用外部TTS
 function speak(text, lang, rate, callback) {
-  // 尝试用原生语音API（这个在某些浏览器可能不行）
-  if (tryNativeSpeak(text, lang)) {
-    if (callback) callback();
-    return;
-  }
-
-  // 使用TTS服务
-  var tl = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
-  var encodedText = encodeURIComponent(text);
-
-  var audio = new Audio();
-  audio.src = 'https://sslconverter.org/sound?text=' + encodedText + '&lang=' + (lang === 'zh-CN' ? 'zh' : 'en') + '&speed=slow';
-  audio.volume = 1;
-
-  audio.onended = function() {
-    if (callback) callback();
-  };
-
-  audio.onerror = function() {
-    console.log('TTS失败');
-  };
-
-  audio.play().catch(function(e) {
-    console.log('播放错误:', e);
-  });
-}
-
-// 尝试原生语音
-function tryNativeSpeak(text, lang) {
-  if (!window.speechSynthesis) return false;
+  if (!window.speechSynthesis) return;
 
   try {
     window.speechSynthesis.cancel();
@@ -491,10 +462,13 @@ function tryNativeSpeak(text, lang) {
     utterance.rate = 0.8;
     utterance.volume = 1;
 
+    if (callback) {
+      utterance.onend = callback;
+    }
+
     window.speechSynthesis.speak(utterance);
-    return true;
   } catch(e) {
-    return false;
+    console.log('语音错误:', e);
   }
 }
 
