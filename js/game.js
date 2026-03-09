@@ -40,6 +40,9 @@ const elements = {
 
 // 初始化游戏
 function initGame() {
+  // 初始化语音
+  initSpeech();
+
   // 绑定难度选择按钮
   document.querySelectorAll('.level-card').forEach(card => {
     card.addEventListener('click', () => {
@@ -450,49 +453,106 @@ function playSuccessSound() {
 
 // ===== 语音播放函数 =====
 
-// 播放语音
-function speakText(text, callback) {
+// 语音缓存
+var speechVoices = [];
+var speechReady = false;
+
+// 初始化语音
+function initSpeech() {
   if (!window.speechSynthesis) {
     return;
   }
 
-  var utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-US';
-  utterance.rate = 0.5;
-  utterance.volume = 1;
-
-  if (callback) {
-    utterance.onend = callback;
+  // 获取可用声音
+  function loadVoices() {
+    speechVoices = window.speechSynthesis.getVoices();
+    if (speechVoices.length > 0) {
+      speechReady = true;
+    }
   }
 
-  window.speechSynthesis.speak(utterance);
+  loadVoices();
+
+  // Chrome 需要监听这个事件
+  if (window.speechSynthesis.onvoiceschanged !== undefined) {
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
 }
 
-// 播放字母发音
+// 获取英文女声
+function getEnglishFemaleVoice() {
+  if (speechVoices.length === 0) {
+    speechVoices = window.speechSynthesis.getVoices();
+  }
+
+  // 找英文女声
+  for (var i = 0; i < speechVoices.length; i++) {
+    var voice = speechVoices[i];
+    if (voice.lang.indexOf('en') !== -1 &&
+        (voice.name.indexOf('Female') !== -1 ||
+         voice.name.indexOf('Samantha') !== -1 ||
+         voice.name.indexOf('Karen') !== -1 ||
+         voice.name.indexOf('Victoria') !== -1 ||
+         voice.name.indexOf('Allison') !== -1)) {
+      return voice;
+    }
+  }
+
+  // 找英文声音
+  for (var i = 0; i < speechVoices.length; i++) {
+    if (speechVoices[i].lang.indexOf('en') !== -1) {
+      return speechVoices[i];
+    }
+  }
+
+  return null;
+}
+
+// 播放语音 - 核心函数
+function speak(text, lang, rate, callback) {
+  if (!window.speechSynthesis) {
+    return;
+  }
+
+  // 先停止之前的语音
+  window.speechSynthesis.cancel();
+
+  setTimeout(function() {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang || 'en-US';
+    utterance.rate = rate || 0.8;
+    utterance.volume = 1.0;
+
+    // 设置声音
+    var voice = getEnglishFemaleVoice();
+    if (voice) {
+      utterance.voice = voice;
+    }
+
+    if (callback) {
+      utterance.onend = callback;
+    }
+
+    // 播放
+    window.speechSynthesis.speak(utterance);
+  }, 50);
+}
+
+// 播放字母发音 - 点击字母时调用
 function speakLetter(letter) {
-  if (!window.speechSynthesis) {
-    return;
-  }
-
-  var utterance = new SpeechSynthesisUtterance(letter.toLowerCase());
-  utterance.lang = 'en-US';
-  utterance.rate = 1;
-  utterance.volume = 1;
-  window.speechSynthesis.speak(utterance);
+  speak(letter.toLowerCase(), 'en-US', 1.0);
 }
 
-// 播放单词发音（可重复）
+// 播放单词 - 连续播放2次
 function speakWord(word, times, callback) {
-  let count = 0;
+  var count = 0;
 
-  function speak() {
+  function playNext() {
     if (count < times) {
-      // 添加句号让浏览器把单词当作句子来读，而不是字母
-      const wordWithPunctuation = word + '.';
-      speakText(wordWithPunctuation, () => {
+      speak(word + '.', 'en-US', 0.7, function() {
         count++;
         if (count < times) {
-          setTimeout(speak, 800); // 每次间隔800ms
+          setTimeout(playNext, 600);
         } else if (callback) {
           callback();
         }
@@ -500,23 +560,24 @@ function speakWord(word, times, callback) {
     }
   }
 
-  speak();
+  playNext();
 }
 
-// 播放句子
+// 播放例句
 function speakSentence(sentence, callback) {
-  speakText(sentence, callback);
+  speak(sentence, 'en-US', 0.7, callback);
 }
 
 // 播放鼓励语音 - 汪汪队主题
 function playEncouragement(correctCount) {
+  // 汪汪队风格的鼓励语
   var encouragements = [
-    "Great job! You're a super star!",
-    "Amazing! You're as brave as Marshall!",
-    "Excellent work! You're as clever as Rocky!",
-    "Wonderful! You're as fast as Rubble!",
-    "Fantastic! You're as helpful as Zuma!",
-    "Super! Just like Skye, you're doing great!",
+    "Great job! You're a super star! Like Chase would say, let's go!",
+    "Amazing! You're as brave as Marshall! The team is proud of you!",
+    "Excellent work! You're as clever as Rocky! Green means go!",
+    "Wonderful! You're as fast as Rubble! Let's keep rolling!",
+    "Fantastic! You're as helpful as Zuma! Water you waiting for!",
+    "Super! Just like Skye, you're doing great! Put your paws up!",
     "太棒了！你和汪汪队一样厉害！",
     "非常好！莱德队长会为你骄傲的！",
     "你真的很棒！阿奇会说：任务完成！",
@@ -526,17 +587,10 @@ function playEncouragement(correctCount) {
   var randomIndex = Math.floor(Math.random() * encouragements.length);
   var text = encouragements[randomIndex];
 
-  if (!window.speechSynthesis) {
-    return;
-  }
-  window.speechSynthesis.cancel();
+  // 判断语言
+  var isEnglish = /[a-zA-Z]/.test(text);
+  var lang = isEnglish ? 'en-US' : 'zh-CN';
 
-  var utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = text.indexOf('!') > -1 && /[a-zA-Z]/.test(text) ? 'en-US' : 'zh-CN';
-  utterance.rate = 0.8;
-  utterance.volume = 1;
-
-  window.speechSynthesis.speak(utterance);
+  speak(text, lang, 0.8);
 }
-
 
