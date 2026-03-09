@@ -450,67 +450,34 @@ function playSuccessSound() {
 
 // ===== 语音播放函数 =====
 
-// 获取可用的美式女声
-function getFemaleVoice() {
-  if (!('speechSynthesis' in window)) {
-    return null;
-  }
-
-  const voices = window.speechSynthesis.getVoices();
-  if (voices.length === 0) {
-    return null;
-  }
-
-  return voices.find(voice =>
-    voice.lang.includes('en-US') &&
-    (voice.name.includes('Female') || voice.name.includes('Samantha') || voice.name.includes('Karen'))
-  ) || voices.find(voice => voice.lang.includes('en-US')) || voices[0];
-}
-
 // 播放语音
 function speakText(text, callback) {
-  if (!('speechSynthesis' in window)) {
-    console.log('浏览器不支持语音合成');
+  if (!window.speechSynthesis) {
     return;
   }
 
-  window.speechSynthesis.cancel();
-
-  const utterance = new SpeechSynthesisUtterance(text);
+  var utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'en-US';
   utterance.rate = 0.5;
-  utterance.pitch = 1.2;
-  utterance.volume = 1.0;
-
-  const voice = getFemaleVoice();
-  if (voice) {
-    utterance.voice = voice;
-  }
+  utterance.volume = 1;
 
   if (callback) {
     utterance.onend = callback;
   }
-
-  utterance.onerror = function(e) {
-    console.log('语音播放错误:', e);
-  };
 
   window.speechSynthesis.speak(utterance);
 }
 
 // 播放字母发音
 function speakLetter(letter) {
-  if (!('speechSynthesis' in window)) {
+  if (!window.speechSynthesis) {
     return;
   }
 
-  window.speechSynthesis.cancel();
-
-  const utterance = new SpeechSynthesisUtterance(letter.toLowerCase());
+  var utterance = new SpeechSynthesisUtterance(letter.toLowerCase());
   utterance.lang = 'en-US';
-  utterance.rate = 1.0;
-  utterance.volume = 1.0;
-
+  utterance.rate = 1;
+  utterance.volume = 1;
   window.speechSynthesis.speak(utterance);
 }
 
@@ -571,4 +538,5 @@ function playEncouragement(correctCount) {
 
   window.speechSynthesis.speak(utterance);
 }
+
 
