@@ -6,6 +6,7 @@ const gameState = {
   currentQuestion: 1,
   totalQuestions: 100,
   currentScore: 0,
+  correctCount: 0, // 记录正确答题数
   currentWord: null,
   userAnswer: [],
   letterOptions: [],
@@ -67,6 +68,7 @@ function startGame(level) {
   gameState.currentLevel = level;
   gameState.currentQuestion = 1;
   gameState.currentScore = 0;
+  gameState.correctCount = 0;
 
   // 准备100题：每题都随机抽取，确保完全随机
   const levelWords = wordsData[level];
@@ -248,12 +250,13 @@ function checkAnswer() {
 
   if (isCorrect) {
     gameState.currentScore += 10;
+    gameState.correctCount++;
     elements.currentScore.textContent = gameState.currentScore;
 
-    // 检查是否达到100分，如果是则播放鼓励语音
-    if (gameState.currentScore % 100 === 0) {
+    // 每答对5题播放一次鼓励语音
+    if (gameState.correctCount % 5 === 0) {
       setTimeout(() => {
-        playEncouragement(gameState.currentScore);
+        playEncouragement(gameState.correctCount);
       }, 3000); // 等待例句读完后再播放
     }
 
@@ -642,15 +645,20 @@ function speakSentence(sentence, callback) {
   speakText(sentence, callback);
 }
 
-// 播放鼓励语音
-function playEncouragement(score) {
+// 播放鼓励语音 - 汪汪队主题
+function playEncouragement(correctCount) {
+  // 汪汪队主题鼓励语
   const encouragements = [
-    { text: "Great job! Keep going!", lang: "en-US" },
-    { text: "Excellent work! You're doing amazing!", lang: "en-US" },
-    { text: "Wonderful! Keep up the good work!", lang: "en-US" },
-    { text: "太棒了！继续加油！", lang: "zh-CN" },
-    { text: "非常好！你真厉害！", lang: "zh-CN" },
-    { text: "继续努力！你能行的！", lang: "zh-CN" }
+    { text: "Great job! You're a super star! Like Chase would say, let's go!", lang: "en-US" },
+    { text: "Amazing! You're as brave as Marshall! The team is proud of you!", lang: "en-US" },
+    { text: "Excellent work! You're as clever as Rocky! Green means go!", lang: "en-US" },
+    { text: "Wonderful! You're as fast as Rubble! Let's keep rolling!", lang: "en-US" },
+    { text: "Fantastic! You're as helpful as Zuma! Water you waiting for!", lang: "en-US" },
+    { text: "Super! Just like Skye's the youngest pilot, you're doing great!", lang: "en-US" },
+    { text: "太棒了！你和汪汪队一样厉害！", lang: "zh-CN" },
+    { text: "非常好！莱德队长会为你骄傲的！", lang: "zh-CN" },
+    { text: "你真的很棒！阿奇会说：任务完成！", lang: "zh-CN" },
+    { text: "继续加油！豆豆会给你点赞！", lang: "zh-CN" }
   ];
 
   // 随机选择一句鼓励语
@@ -663,7 +671,7 @@ function playEncouragement(score) {
 
     const utterance = new SpeechSynthesisUtterance(encouragement.text);
     utterance.lang = encouragement.lang;
-    utterance.rate = 0.8;
+    utterance.rate = 0.7;
     utterance.volume = 1.0;
 
     window.speechSynthesis.speak(utterance);
