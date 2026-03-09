@@ -40,6 +40,7 @@ const elements = {
 
 // 初始化游戏
 function initGame() {
+  alert('游戏已初始化');
   // 绑定难度选择按钮
   document.querySelectorAll('.level-card').forEach(card => {
     card.addEventListener('click', () => {
@@ -558,5 +559,3 @@ function playEncouragement(correctCount) {
 
   speak(text, lang, 0.8);
 }
-
-
