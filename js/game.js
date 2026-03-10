@@ -1,5 +1,10 @@
 // ===== 游戏核心逻辑 =====
 
+// 测试按钮
+function testBtn() {
+  speakLetter('A');
+}
+
 // 游戏状态
 const gameState = {
   currentLevel: 1,
