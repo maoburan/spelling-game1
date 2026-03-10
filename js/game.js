@@ -319,13 +319,6 @@ function showResult(isCorrect) {
           nextBtn.textContent = '下一题 →';
           nextBtn.disabled = false;
           nextBtn.style.opacity = '1';
-
-          // 每答对5题播放一次鼓励语音（所有句子读完后再播放）
-          if (gameState.correctCount % 5 === 0) {
-            setTimeout(() => {
-              playEncouragement(gameState.correctCount);
-            }, 500); // 稍微延迟一下，让按钮先显示
-          }
         });
       });
     });
@@ -478,11 +471,10 @@ function speak(text, lang, rate, callback) {
   var audio = new Audio(url);
   audio.volume = 1;
 
-  // 设置超时，如果音频加载失败也能继续
+  // 设置超时保护
   var timeoutId = setTimeout(function() {
-    console.log('语音播放超时，继续下一步');
     if (callback) callback();
-  }, 5000); // 5秒超时
+  }, 8000);
 
   audio.onended = function() {
     clearTimeout(timeoutId);
@@ -491,15 +483,10 @@ function speak(text, lang, rate, callback) {
 
   audio.onerror = function(e) {
     clearTimeout(timeoutId);
-    console.log('语音播放失败:', e);
-    if (callback) callback(); // 即使失败也要调用callback继续流程
+    if (callback) callback();
   };
 
-  audio.play().catch(function(e) {
-    clearTimeout(timeoutId);
-    console.log('语音播放被阻止:', e);
-    if (callback) callback();
-  });
+  audio.play();
 }
 
 // 播放字母发音 - 点击字母时调用
@@ -534,31 +521,5 @@ function speakWord(word, times, callback) {
 // 播放例句
 function speakSentence(sentence, callback) {
   speak(sentence, 'en-US', 0.7, callback);
-}
-
-// 播放鼓励语音 - 汪汪队主题
-function playEncouragement(correctCount) {
-  // 汪汪队风格的鼓励语
-  var encouragements = [
-    "Great job! You're a super star! Like Chase would say, let's go!",
-    "Amazing! You're as brave as Marshall! The team is proud of you!",
-    "Excellent work! You're as clever as Rocky! Green means go!",
-    "Wonderful! You're as fast as Rubble! Let's keep rolling!",
-    "Fantastic! You're as helpful as Zuma! Water you waiting for!",
-    "Super! Just like Skye, you're doing great! Put your paws up!",
-    "太棒了！你和汪汪队一样厉害！",
-    "非常好！莱德队长会为你骄傲的！",
-    "你真的很棒！阿奇会说：任务完成！",
-    "继续加油！豆豆会给你点赞！"
-  ];
-
-  var randomIndex = Math.floor(Math.random() * encouragements.length);
-  var text = encouragements[randomIndex];
-
-  // 判断语言
-  var isEnglish = /[a-zA-Z]/.test(text);
-  var lang = isEnglish ? 'en-US' : 'zh-CN';
-
-  speak(text, lang, 0.8);
 }
 
