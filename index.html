@@ -134,24 +134,13 @@
   <script src="js/words.js"></script>
   <script src="js/game.js"></script>
   <script>
-    // 点击页面任意位置启用音频
-    document.addEventListener('click', function initAudio() {
-      var encodedText = encodeURIComponent('hello');
-      var url = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodedText + '&tl=en-US&client=tw-ob';
-      var audio = new Audio(url);
-      audio.volume = 1;
-      audio.play().then(function() {
-        console.log('音频已启用');
-      }).catch(function(e) {
-        console.log('音频启用失败', e);
-      });
-      document.removeEventListener('click', initAudio);
-    }, {once: true});
-
+    // 使用有道的TTS
     window.speakText = function(text, lang) {
       var encodedText = encodeURIComponent(text);
-      var tl = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
-      var url = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodedText + '&tl=' + tl + '&client=tw-ob';
+      var tl = lang === 'zh-CN' ? 'zh-CN' : 'en';
+
+      // 使用有道词典TTS
+      var url = 'https://dict.youdao.com/dictvoice?audio=' + encodedText + '&type=' + (tl === 'zh-CN' ? 2 : 1);
 
       var audio = new Audio(url);
       audio.volume = 1;
@@ -159,6 +148,11 @@
         console.log('播放失败', e);
       });
     };
+
+    // 点击启用音频
+    document.addEventListener('click', function initAudio() {
+      window.speakText('hello', 'en-US');
+    }, {once: true});
   </script>
 </body>
 </html>
