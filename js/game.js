@@ -450,14 +450,14 @@ function playSuccessSound() {
 
 // ===== 语音播放函数 =====
 
-// 播放语音
+// 播放语音 - 用Google TTS
 function speak(text, lang, rate, callback) {
-  if (window.speakText) {
-    window.speakText(text, lang);
-  }
-  if (callback) {
-    setTimeout(callback, 1500);
-  }
+  var tl = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
+  var url = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodeURIComponent(text) + '&tl=' + tl + '&client=tw-ob';
+  var audio = new Audio(url);
+  audio.volume = 1;
+  audio.play();
+  if (callback) setTimeout(callback, 1500);
 }
 
 // 播放字母发音 - 点击字母时调用
@@ -515,5 +515,6 @@ function playEncouragement(correctCount) {
 
   speak(text, lang, 0.8);
 }
+
 
 
