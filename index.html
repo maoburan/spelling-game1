@@ -133,27 +133,7 @@
 
   <script src="js/words.js"></script>
   <script src="js/game.js"></script>
-  <script>
-    // 使用有道的TTS
-    window.speakText = function(text, lang) {
-      var encodedText = encodeURIComponent(text);
-      var tl = lang === 'zh-CN' ? 'zh-CN' : 'en';
-
-      // 使用有道词典TTS
-      var url = 'https://dict.youdao.com/dictvoice?audio=' + encodedText + '&type=' + (tl === 'zh-CN' ? 2 : 1);
-
-      var audio = new Audio(url);
-      audio.volume = 1;
-      audio.play().catch(function(e) {
-        console.log('播放失败', e);
-      });
-    };
-
-    // 点击启用音频
-    document.addEventListener('click', function initAudio() {
-      window.speakText('hello', 'en-US');
-    }, {once: true});
-  </script>
 </body>
 </html>
+
 
