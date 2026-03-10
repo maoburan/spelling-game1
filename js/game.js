@@ -465,46 +465,23 @@ function playSuccessSound() {
 
 // ===== 语音播放函数 =====
 
-// 播放语音 - 用原生API
+// 播放语音 - 用有道TTS
 function speak(text, lang, rate, callback) {
-  try {
-    var u = new SpeechSynthesisUtterance(text);
-    u.lang = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
-    u.rate = 0.8;
-    window.speechSynthesis.speak(u);
-  } catch(e) {}
+  var type = lang === 'zh-CN' ? 2 : 1;
+  var url = 'https://dict.youdao.com/dictvoice?audio=' + encodeURIComponent(text) + '&type=' + type;
+  var audio = new Audio(url);
+  audio.volume = 1;
+  audio.play();
   if (callback) setTimeout(callback, 1500);
 }
 
 // 播放字母发音 - 点击字母时调用
 function speakLetter(letter) {
-  try {
-    if (!window.speechSynthesis) {
-      alert('不支持语音');
-      return;
-    }
-
-    window.speechSynthesis.cancel();
-
-    var u = new SpeechSynthesisUtterance(letter.toLowerCase());
-    u.lang = 'en-US';
-    u.rate = 1;
-    u.volume = 1;
-
-    // 尝试获取声音
-    var voices = window.speechSynthesis.getVoices();
-    if (voices.length > 0) {
-      var enVoice = voices.find(function(v) { return v.lang.indexOf('en') > -1; });
-      if (enVoice) u.voice = enVoice;
-    }
-
-    u.onend = function() { console.log('播放完成'); };
-    u.onerror = function(e) { alert('错误: ' + e.error); };
-
-    window.speechSynthesis.speak(u);
-  } catch(e) {
-    alert('异常: ' + e.message);
-  }
+  // 用有道TTS
+  var url = 'https://dict.youdao.com/dictvoice?audio=' + encodeURIComponent(letter.toLowerCase()) + '&type=1';
+  var audio = new Audio(url);
+  audio.volume = 1;
+  audio.play();
 }
 
 // 播放单词 - 连续播放2次
@@ -557,6 +534,5 @@ function playEncouragement(correctCount) {
 
   speak(text, lang, 0.8);
 }
-
 
 
