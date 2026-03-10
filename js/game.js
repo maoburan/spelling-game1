@@ -462,6 +462,7 @@ function speak(text, lang, rate, callback) {
 
 // 播放字母发音 - 点击字母时调用
 function speakLetter(letter) {
+  alert('speakLetter: ' + letter);
   // 字母用原生语音
   try {
     if (window.speechSynthesis) {
