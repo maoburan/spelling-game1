@@ -462,7 +462,7 @@ function speak(text, lang, rate, callback) {
 
 // 播放字母发音 - 点击字母时调用
 function speakLetter(letter) {
-  speak(letter.toLowerCase(), 'en-US', 1.0);
+  speak(letter.toLowerCase() + '.', 'en-US', 1.0);
 }
 
 // 播放单词 - 连续播放2次
@@ -515,6 +515,5 @@ function playEncouragement(correctCount) {
 
   speak(text, lang, 0.8);
 }
-
 
 
