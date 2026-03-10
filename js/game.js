@@ -75,14 +75,19 @@ function startGame(level) {
   gameState.currentScore = 0;
   gameState.correctCount = 0;
 
-  // 准备100题：每题都随机抽取，确保完全随机
+  // 准备100题：全部不重复
   const levelWords = wordsData[level];
   const questionQueue = [];
 
+  // 先打乱整个词库
+  let shuffledWords = shuffleArray([...levelWords]);
+
   for (let i = 0; i < gameState.totalQuestions; i++) {
-    // 每次都从词库中随机选择一个单词
-    const randomIndex = Math.floor(Math.random() * levelWords.length);
-    questionQueue.push(levelWords[randomIndex]);
+    // 如果打乱的词库用完了，重新打乱并继续
+    if (i >= shuffledWords.length) {
+      shuffledWords = shuffleArray([...levelWords]);
+    }
+    questionQueue.push(shuffledWords[i % shuffledWords.length]);
   }
 
   gameState.questionQueue = questionQueue;
