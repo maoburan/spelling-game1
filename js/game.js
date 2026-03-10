@@ -1,10 +1,5 @@
 // ===== 游戏核心逻辑 =====
 
-// 测试按钮
-function testBtn() {
-  speakLetter('A');
-}
-
 // 游戏状态
 const gameState = {
   currentLevel: 1,
@@ -145,6 +140,11 @@ function loadQuestion() {
   // 渲染填空槽和字母按钮
   renderLetterSlots();
   renderLetterButtons();
+
+  // 自动读出单词2次
+  setTimeout(function() {
+    speakWord(gameState.currentWord.word, 2);
+  }, 500);
 }
 
 // 生成字母选项（正确答案 + 干扰字母）
@@ -471,8 +471,10 @@ function speak(text, lang, rate, callback) {
   var url = 'https://dict.youdao.com/dictvoice?audio=' + encodeURIComponent(text) + '&type=' + type;
   var audio = new Audio(url);
   audio.volume = 1;
+  audio.onended = function() {
+    if (callback) callback();
+  };
   audio.play();
-  if (callback) setTimeout(callback, 1500);
 }
 
 // 播放字母发音 - 点击字母时调用
