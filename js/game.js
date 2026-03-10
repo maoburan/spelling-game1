@@ -40,6 +40,16 @@ const elements = {
 
 // 初始化游戏
 function initGame() {
+  // 初始化语音
+  if (window.speechSynthesis) {
+    // 获取声音列表
+    var voices = window.speechSynthesis.getVoices();
+    // 预播放一个静音来激活引擎
+    var u = new SpeechSynthesisUtterance(' ');
+    u.volume = 0;
+    window.speechSynthesis.speak(u);
+  }
+
   // 绑定难度选择按钮
   document.querySelectorAll('.level-card').forEach(card => {
     card.addEventListener('click', () => {
@@ -463,13 +473,33 @@ function speak(text, lang, rate, callback) {
 
 // 播放字母发音 - 点击字母时调用
 function speakLetter(letter) {
-  // 用原生语音
   try {
+    if (!window.speechSynthesis) {
+      alert('不支持语音');
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
     var u = new SpeechSynthesisUtterance(letter.toLowerCase());
     u.lang = 'en-US';
     u.rate = 1;
+    u.volume = 1;
+
+    // 尝试获取声音
+    var voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      var enVoice = voices.find(function(v) { return v.lang.indexOf('en') > -1; });
+      if (enVoice) u.voice = enVoice;
+    }
+
+    u.onend = function() { console.log('播放完成'); };
+    u.onerror = function(e) { alert('错误: ' + e.error); };
+
     window.speechSynthesis.speak(u);
-  } catch(e) {}
+  } catch(e) {
+    alert('异常: ' + e.message);
+  }
 }
 
 // 播放单词 - 连续播放2次
@@ -522,8 +552,6 @@ function playEncouragement(correctCount) {
 
   speak(text, lang, 0.8);
 }
-
-
 
 
 
