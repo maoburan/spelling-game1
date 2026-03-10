@@ -466,7 +466,9 @@ function speakLetter(letter) {
   var url = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodeURIComponent(letter.toLowerCase()) + '&tl=en-US&client=tw-ob';
   var audio = new Audio(url);
   audio.volume = 1;
-  audio.play();
+  audio.play().catch(function(e) {
+    alert('播放失败: ' + e);
+  });
 }
 
 // 播放单词 - 连续播放2次
@@ -519,6 +521,7 @@ function playEncouragement(correctCount) {
 
   speak(text, lang, 0.8);
 }
+
 
 
 
