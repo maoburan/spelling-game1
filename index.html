@@ -134,6 +134,20 @@
   <script src="js/words.js"></script>
   <script src="js/game.js"></script>
   <script>
+    // 点击页面任意位置启用音频
+    document.addEventListener('click', function initAudio() {
+      var encodedText = encodeURIComponent('hello');
+      var url = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodedText + '&tl=en-US&client=tw-ob';
+      var audio = new Audio(url);
+      audio.volume = 1;
+      audio.play().then(function() {
+        console.log('音频已启用');
+      }).catch(function(e) {
+        console.log('音频启用失败', e);
+      });
+      document.removeEventListener('click', initAudio);
+    }, {once: true});
+
     window.speakText = function(text, lang) {
       var encodedText = encodeURIComponent(text);
       var tl = lang === 'zh-CN' ? 'zh-CN' : 'en-US';
@@ -141,21 +155,11 @@
 
       var audio = new Audio(url);
       audio.volume = 1;
-
-      audio.addEventListener('canplaythrough', function() {
-        audio.play().catch(function(e) {
-          console.log('播放失败', e);
-        });
-      }, false);
-
-      audio.addEventListener('error', function(e) {
-        console.log('加载失败', e);
+      audio.play().catch(function(e) {
+        console.log('播放失败', e);
       });
-
-      audio.load();
     };
   </script>
 </body>
 </html>
-
 
