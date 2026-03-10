@@ -295,18 +295,11 @@ function showResult(isCorrect) {
     // 播放成功音效
     playSuccessSound();
 
-    // 用温柔女声读2遍单词
-    speakWord(word.word, 2);
-
-    // 读2遍例句（每句读1遍）
-    setTimeout(() => {
-      speakSentence(word.sentences[0].english, () => {
-        // 第一句读完后再读第二句
-        setTimeout(() => {
-          speakSentence(word.sentences[1].english);
-        }, 800);
-      });
-    }, 1500);
+    // 禁用下一题按钮
+    const nextBtn = document.getElementById('btnNext');
+    nextBtn.textContent = '请稍候...';
+    nextBtn.disabled = true;
+    nextBtn.style.opacity = '0.5';
 
     // 显示单词
     elements.resultWord.innerHTML = `
@@ -323,11 +316,19 @@ function showResult(isCorrect) {
       </div>
     `).join('');
 
-    // 正确时显示"下一题"按钮
-    const nextBtn = document.getElementById('btnNext');
-    nextBtn.textContent = '下一题 →';
-    nextBtn.disabled = false;
-    nextBtn.style.opacity = '1';
+    // 读2遍单词
+    speakWord(word.word, 2, function() {
+      // 单词读完，读第一句
+      speakSentence(word.sentences[0].english, function() {
+        // 第一句读完，读第二句
+        speakSentence(word.sentences[1].english, function() {
+          // 所有句子读完，启用下一题按钮
+          nextBtn.textContent = '下一题 →';
+          nextBtn.disabled = false;
+          nextBtn.style.opacity = '1';
+        });
+      });
+    });
 
   } else {
     elements.resultIcon.textContent = '😅';
