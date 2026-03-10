@@ -268,13 +268,6 @@ function checkAnswer() {
     gameState.correctCount++;
     elements.currentScore.textContent = gameState.currentScore;
 
-    // 每答对5题播放一次鼓励语音
-    if (gameState.correctCount % 5 === 0) {
-      setTimeout(() => {
-        playEncouragement(gameState.correctCount);
-      }, 3000); // 等待例句读完后再播放
-    }
-
     showResult(true);
   } else {
     showResult(false);
@@ -326,6 +319,13 @@ function showResult(isCorrect) {
           nextBtn.textContent = '下一题 →';
           nextBtn.disabled = false;
           nextBtn.style.opacity = '1';
+
+          // 每答对5题播放一次鼓励语音（所有句子读完后再播放）
+          if (gameState.correctCount % 5 === 0) {
+            setTimeout(() => {
+              playEncouragement(gameState.correctCount);
+            }, 500); // 稍微延迟一下，让按钮先显示
+          }
         });
       });
     });
@@ -477,10 +477,29 @@ function speak(text, lang, rate, callback) {
   var url = 'https://dict.youdao.com/dictvoice?audio=' + encodeURIComponent(text) + '&type=' + type;
   var audio = new Audio(url);
   audio.volume = 1;
+
+  // 设置超时，如果音频加载失败也能继续
+  var timeoutId = setTimeout(function() {
+    console.log('语音播放超时，继续下一步');
+    if (callback) callback();
+  }, 5000); // 5秒超时
+
   audio.onended = function() {
+    clearTimeout(timeoutId);
     if (callback) callback();
   };
-  audio.play();
+
+  audio.onerror = function(e) {
+    clearTimeout(timeoutId);
+    console.log('语音播放失败:', e);
+    if (callback) callback(); // 即使失败也要调用callback继续流程
+  };
+
+  audio.play().catch(function(e) {
+    clearTimeout(timeoutId);
+    console.log('语音播放被阻止:', e);
+    if (callback) callback();
+  });
 }
 
 // 播放字母发音 - 点击字母时调用
@@ -542,5 +561,4 @@ function playEncouragement(correctCount) {
 
   speak(text, lang, 0.8);
 }
-
 
