@@ -462,16 +462,11 @@ function speak(text, lang, rate, callback) {
 
 // 播放字母发音 - 点击字母时调用
 function speakLetter(letter) {
-  alert('speakLetter: ' + letter);
-  // 字母用原生语音
-  try {
-    if (window.speechSynthesis) {
-      var u = new SpeechSynthesisUtterance(letter.toLowerCase());
-      u.lang = 'en-US';
-      u.rate = 1;
-      window.speechSynthesis.speak(u);
-    }
-  } catch(e) {}
+  // 用Google TTS
+  var url = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodeURIComponent(letter.toLowerCase()) + '&tl=en-US&client=tw-ob';
+  var audio = new Audio(url);
+  audio.volume = 1;
+  audio.play();
 }
 
 // 播放单词 - 连续播放2次
