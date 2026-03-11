@@ -309,6 +309,13 @@ function showResult(isCorrect) {
       </div>
     `).join('');
 
+    // 保险：10秒后无论如何都启用按钮（防止音频卡住）
+    var buttonTimeout = setTimeout(function() {
+      nextBtn.textContent = '下一题 →';
+      nextBtn.disabled = false;
+      nextBtn.style.opacity = '1';
+    }, 10000);
+
     // 读2遍单词
     speakWord(word.word, 2, function() {
       // 单词读完，读第一句
@@ -316,6 +323,7 @@ function showResult(isCorrect) {
         // 第一句读完，读第二句
         speakSentence(word.sentences[1].english, function() {
           // 所有句子读完，启用下一题按钮
+          clearTimeout(buttonTimeout); // 清除保险超时
           nextBtn.textContent = '下一题 →';
           nextBtn.disabled = false;
           nextBtn.style.opacity = '1';
@@ -486,7 +494,10 @@ function speak(text, lang, rate, callback) {
     if (callback) callback();
   };
 
-  audio.play();
+  audio.play().catch(function(e) {
+    clearTimeout(timeoutId);
+    if (callback) callback();
+  });
 }
 
 // 播放字母发音 - 点击字母时调用
